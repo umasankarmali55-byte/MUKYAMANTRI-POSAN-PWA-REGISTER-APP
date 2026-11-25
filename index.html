@@ -1,0 +1,2854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Mukhyamantri Posan Register</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#10b981">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Posan Register">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <script>
+        // Capture beforeinstallprompt & register Service Worker early before CDN scripts block
+        window.deferredPWAPrompt = null;
+        window.addEventListener('beforeinstallprompt', function(e) {
+            e.preventDefault();
+            window.deferredPWAPrompt = e;
+            var lbl = document.getElementById('pwa-install-label');
+            var dot = document.getElementById('pwa-install-dot');
+            var mbtn = document.getElementById('pwa-install-mobile-btn');
+            if (lbl) lbl.textContent = '📲 Install App';
+            if (dot) dot.classList.add('animate-pulse');
+            if (mbtn) mbtn.style.display = '';
+        });
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js', { scope: './' })
+                .then(function(reg) { reg.update().catch(function(){}); })
+                .catch(function(err) { console.log('PWA SW Registration Failed:', err); });
+        }
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Add Export Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        appBg: '#121415', 
+                        cardBg: '#1a1c1e',
+                        accent: '#10b981',
+                        accentHover: '#059669',
+                        borderGreen: '#2d4a3e',
+                        inputBg: '#2a2d30',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Modern Mesh Gradient Background */
+        body.theme-emerald-glass {
+            background: radial-gradient(circle at top left, #064e3b 0%, #020617 40%, #000000 100%), 
+                        radial-gradient(circle at bottom right, #0f766e 0%, #020617 50%);
+            background-attachment: fixed;
+            color: #e5e7eb;
+        }
+
+        body.theme-ocean-glass {
+            background: radial-gradient(circle at top left, #1e3a8a 0%, #020617 40%, #000000 100%), 
+                        radial-gradient(circle at bottom right, #0369a1 0%, #020617 50%);
+            background-attachment: fixed;
+            color: #e5e7eb;
+        }
+        
+        body.theme-ocean-glass .bg-accent { background: linear-gradient(135deg, #0ea5e9, #0284c7) !important; box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3) !important; border-color: rgba(255,255,255,0.2) !important; }
+        body.theme-ocean-glass .bg-accent:hover { box-shadow: 0 6px 20px rgba(14, 165, 233, 0.4) !important; }
+        body.theme-ocean-glass .text-accent { color: #38bdf8 !important; }
+        body.theme-ocean-glass .border-accent { border-color: #38bdf8 !important; }
+        body.theme-ocean-glass input[type="checkbox"]:checked { background-color: #0ea5e9; border-color: #0ea5e9; box-shadow: 0 0 8px rgba(14, 165, 233, 0.4); }
+        body.theme-ocean-glass .nav-item::before { background-color: #0ea5e9; }
+        body.theme-ocean-glass .poshan-input:focus { border-color: #0ea5e9 !important; box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2) !important; }
+        body.theme-ocean-glass #set-school-name:focus { border-color: #38bdf8 !important; box-shadow: 0 0 10px rgba(14, 165, 233, 0.3) !important; }
+
+        body.theme-slate-solid {
+            background: #0f172a;
+            background-attachment: fixed;
+            color: #e5e7eb;
+        }
+        body.theme-slate-solid .bg-cardBg, 
+        body.theme-slate-solid aside, 
+        body.theme-slate-solid header {
+            background: #1e293b !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            border-color: #334155 !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+        }
+        body.theme-slate-solid .poshan-input {
+            background-color: #0f172a !important;
+            border-color: #334155 !important;
+            backdrop-filter: none !important;
+        }
+        body.theme-slate-solid button.bg-\[\#1a1c1e\] {
+            background: #334155 !important;
+            border-color: #475569 !important;
+            box-shadow: none !important;
+        }
+        body.theme-slate-solid button.bg-\[\#1a1c1e\]:hover {
+            background: #475569 !important;
+        }
+        body.theme-slate-solid .poshan-table th { background-color: #0f172a !important; border-color: #334155 !important; }
+        body.theme-slate-solid .poshan-table td { border-color: #334155 !important; }
+        body.theme-slate-solid .bg-\[\#15201c\] { background: #0f172a !important; }
+        body.theme-slate-solid .border-borderGreen { border-color: #334155 !important; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        /* Glassmorphism Overrides for Tailwind Classes */
+        .bg-appBg { background-color: transparent !important; }
+        
+        .bg-cardBg, aside, header {
+            background: rgba(20, 25, 22, 0.4) !important;
+            backdrop-filter: blur(16px) !important;
+            -webkit-backdrop-filter: blur(16px) !important;
+            border-color: rgba(255, 255, 255, 0.08) !important;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3) !important;
+        }
+
+        .border-gray-800, .border-borderGreen { border-color: rgba(255, 255, 255, 0.1) !important; }
+        
+        .bg-\[\#1a1c1e\] {
+            background: rgba(255, 255, 255, 0.04) !important;
+            backdrop-filter: blur(8px) !important;
+        }
+        
+        .bg-\[\#121415\] { background: rgba(0, 0, 0, 0.3) !important; }
+        .bg-\[\#1f2937\] { background: rgba(255, 255, 255, 0.05) !important; }
+        .bg-\[\#15201c\] { background: rgba(16, 185, 129, 0.1) !important; }
+
+        /* Radiant Glass Buttons */
+        button.bg-\[\#1a1c1e\] {
+            background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02)) !important;
+            border: 1px solid rgba(255,255,255,0.15) !important;
+            box-shadow: 0 4px 12px 0 rgba(0,0,0,0.1) !important;
+            transition: all 0.3s ease !important;
+        }
+        button.bg-\[\#1a1c1e\]:hover {
+            background: rgba(255,255,255,0.12) !important;
+            border-color: rgba(255,255,255,0.25) !important;
+            transform: translateY(-1px);
+        }
+        
+        button.bg-accent {
+            background: linear-gradient(135deg, #10b981, #059669) !important;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3) !important;
+            border: 1px solid rgba(255,255,255,0.2) !important;
+            transition: all 0.3s ease !important;
+        }
+        button.bg-accent:hover {
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4) !important;
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+        }
+
+        button.bg-\[\#f59e0b\] {
+            background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3) !important;
+            border: 1px solid rgba(255,255,255,0.2) !important;
+            color: white !important;
+            transition: all 0.3s ease !important;
+        }
+        button.bg-\[\#f59e0b\]:hover {
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4) !important;
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+        }
+
+        /* Custom Scrollbar for dark theme */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; border: 1px solid rgba(255,255,255,0.05); }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
+
+        /* Specific Table Styling with Crisp Grid Lines */
+        .poshan-table {
+            width: 100%;
+            border-collapse: collapse;
+            border-spacing: 0;
+            font-size: 0.875rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .poshan-table th, .poshan-table td {
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            padding: 0.75rem 0.65rem;
+            text-align: center;
+        }
+        .poshan-table th:first-child, .poshan-table td:first-child {
+            text-align: left;
+        }
+        .poshan-table th {
+            background-color: rgba(255, 255, 255, 0.06);
+            color: #f3f4f6;
+            font-weight: 600;
+        }
+        .poshan-table tbody tr {
+            background-color: transparent;
+            transition: background-color 0.2s;
+        }
+        .poshan-table tbody tr:hover {
+            background-color: rgba(255,255,255,0.04);
+        }
+
+        /* Holiday Row Design (Diagonal Maroon Stripes + Rounded White Banner) */
+        .poshan-table tbody tr.holiday-row,
+        body.theme-colorful-light .poshan-table tbody tr.holiday-row,
+        body.theme-slate-solid .poshan-table tbody tr.holiday-row {
+            background: repeating-linear-gradient(
+                -45deg,
+                #6e111a,
+                #6e111a 10px,
+                #560a12 10px,
+                #560a12 20px
+            ) !important;
+            color: #ffffff !important;
+        }
+        .poshan-table tbody tr.holiday-row:hover,
+        body.theme-colorful-light .poshan-table tbody tr.holiday-row:hover {
+            background: repeating-linear-gradient(
+                -45deg,
+                #7c141e,
+                #7c141e 10px,
+                #5e0c14 10px,
+                #5e0c14 20px
+            ) !important;
+        }
+        .poshan-table tbody tr.holiday-row td,
+        body.theme-colorful-light .poshan-table tbody tr.holiday-row td {
+            color: #ffffff !important;
+            border-color: rgba(255, 255, 255, 0.22) !important;
+            font-weight: 700;
+        }
+        .poshan-table tbody tr.holiday-row td .text-gray-400,
+        .poshan-table tbody tr.holiday-row td .text-gray-500,
+        .poshan-table tbody tr.holiday-row td .text-gray-300,
+        .poshan-table tbody tr.holiday-row td label {
+            color: #ffffff !important;
+        }
+        .poshan-table td.holiday-banner-td {
+            padding: 5px 8px !important;
+            vertical-align: middle !important;
+        }
+        .holiday-banner-box {
+            display: block !important;
+            width: 100% !important;
+            background: #f8fafc !important;
+            color: #7f1d1d !important;
+            border: 1px solid rgba(0, 0, 0, 0.15) !important;
+            border-radius: 7px !important;
+            padding: 7px 14px !important;
+            font-size: 0.84rem !important;
+            font-weight: 800 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.02em;
+            text-align: left !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25) !important;
+            outline: none !important;
+        }
+        .holiday-banner-box::placeholder {
+            color: #991b1b !important;
+            opacity: 0.55;
+            text-transform: none;
+            font-weight: 600;
+        }
+        .holiday-banner-box:focus {
+            background: #ffffff !important;
+            box-shadow: 0 0 0 2px #fca5a5 !important;
+        }
+
+        /* Glass Inputs */
+        .poshan-input {
+            background-color: rgba(0,0,0,0.2) !important;
+            border: 1px solid rgba(255,255,255,0.1) !important;
+            border-radius: 0.375rem;
+            padding: 0.375rem 0.5rem;
+            color: white;
+            width: 100%;
+            text-align: center;
+            transition: all 0.3s;
+            backdrop-filter: blur(4px);
+        }
+        .poshan-input:focus {
+            outline: none;
+            border-color: #10b981 !important;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2) !important;
+            background-color: rgba(0,0,0,0.4) !important;
+        }
+        .poshan-input-left { text-align: left; }
+        
+        /* Checkbox styling */
+        input[type="checkbox"] {
+            appearance: none;
+            background-color: rgba(0,0,0,0.3);
+            margin: 0;
+            font: inherit;
+            color: currentColor;
+            width: 1.2em;
+            height: 1.2em;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 0.25em;
+            display: grid;
+            place-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        input[type="checkbox"]::before {
+            content: "";
+            width: 0.65em;
+            height: 0.65em;
+            transform: scale(0);
+            transition: 120ms transform ease-in-out;
+            box-shadow: inset 1em 1em white;
+            background-color: white;
+            transform-origin: center;
+            clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+        }
+        input[type="checkbox"]:checked {
+            background-color: #10b981;
+            border-color: #10b981;
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+        }
+        input[type="checkbox"]:checked::before {
+            transform: scale(1);
+        }
+
+        /* Nav specific glass overrides */
+        .nav-item { position: relative; overflow: hidden; }
+        .nav-item::before {
+            content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 3px;
+            background-color: #10b981; transform: scaleY(0); transition: transform 0.3s ease;
+        }
+        .nav-item:hover { background-color: rgba(255,255,255,0.05) !important; }
+        .nav-item.active { 
+            background-color: rgba(255,255,255,0.08) !important; 
+            color: white !important; 
+            text-shadow: 0 0 8px rgba(255,255,255,0.3);
+            border-left: none !important;
+        }
+        .nav-item.active::before { transform: scaleY(1); }
+
+
+        /* =====================================================
+           THEME: Colourful Light (normal look, no glass)
+           Each tab gets its own colour via body[data-tab]
+           ===================================================== */
+        body.theme-colorful-light { --a1:#6366f1; --a2:#8b5cf6; --tint:#eef2ff; --ring:rgba(99,102,241,.22);
+              background: radial-gradient(circle at 0% 0%, #e0e7ff 0, transparent 38%), radial-gradient(circle at 100% 0%, #fce7f3 0, transparent 38%), radial-gradient(circle at 100% 100%, #d1fae5 0, transparent 38%), #f8fafc;
+              background-attachment: fixed; color:#1e293b; }
+        body.theme-colorful-light[data-tab="master-attendance"] { --a1:#2563eb; --a2:#06b6d4; --tint:#eff6ff; --ring:rgba(37,99,235,.22); }
+        body.theme-colorful-light[data-tab="mdm-register"]      { --a1:#ea580c; --a2:#f59e0b; --tint:#fff7ed; --ring:rgba(234,88,12,.22); }
+        body.theme-colorful-light[data-tab="rice-register"]     { --a1:#16a34a; --a2:#65a30d; --tint:#f0fdf4; --ring:rgba(22,163,74,.22); }
+        body.theme-colorful-light[data-tab="millet-laddoo"]     { --a1:#db2777; --a2:#f43f5e; --tint:#fdf2f8; --ring:rgba(219,39,119,.22); }
+        body.theme-colorful-light[data-tab="abstract-format"]   { --a1:#7c3aed; --a2:#6366f1; --tint:#f5f3ff; --ring:rgba(124,58,237,.22); }
+        body.theme-colorful-light[data-tab="settings"]          { --a1:#0d9488; --a2:#0ea5e9; --tint:#f0fdfa; --ring:rgba(13,148,136,.22); }
+
+        /* text */
+        body.theme-colorful-light .text-white { color:#0f172a !important; }
+        body.theme-colorful-light .text-gray-300, body.theme-colorful-light .text-gray-400 { color:#64748b !important; }
+        body.theme-colorful-light .text-gray-500 { color:#94a3b8 !important; }
+        body.theme-colorful-light .text-accent { color:var(--a1) !important; }
+        body.theme-colorful-light .border-accent { border-color:var(--a1) !important; }
+        body.theme-colorful-light .text-blue-400 { color:#2563eb !important; }
+        body.theme-colorful-light .text-orange-400 { color:#ea580c !important; }
+        body.theme-colorful-light .tab-content h2 { display:inline-block; background:linear-gradient(90deg,var(--a1),var(--a2)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent !important; }
+        body.theme-colorful-light .tab-content h3 { color:var(--a1) !important; }
+
+        /* cards */
+        body.theme-colorful-light .bg-cardBg { background:#fff !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; border:1px solid #e2e8f0 !important; border-radius:1rem; box-shadow:0 10px 28px -12px rgba(30,41,59,.25), 0 2px 6px rgba(15,23,42,.05) !important; }
+        body.theme-colorful-light .tab-content .bg-cardBg { border-top:4px solid var(--a1) !important; }
+        body.theme-colorful-light .tab-content input.bg-cardBg { border:1.5px solid #cbd5e1 !important; box-shadow:none !important; border-radius:.6rem; }
+        body.theme-colorful-light .border-gray-800, body.theme-colorful-light .border-gray-700, body.theme-colorful-light .border-borderGreen, body.theme-colorful-light .border-\[\#4b5563\] { border-color:#e2e8f0 !important; }
+        body.theme-colorful-light .bg-\[\#1a1c1e\] { background:var(--tint) !important; backdrop-filter:none !important; }
+        body.theme-colorful-light .bg-\[\#121415\] { background:#fff !important; }
+        body.theme-colorful-light td.bg-\[\#121415\] { background:#f1f5f9 !important; }
+        body.theme-colorful-light .bg-\[\#1f2937\] { background:#f1f5f9 !important; backdrop-filter:none !important; }
+        body.theme-colorful-light .bg-\[\#15201c\] { background:var(--tint) !important; }
+        body.theme-colorful-light td.bg-\[\#15201c\] { color:var(--a1) !important; font-weight:800; letter-spacing:.02em; }
+        body.theme-colorful-light .opacity-50 { opacity:1 !important; }
+
+        /* sidebar + mobile header */
+        body.theme-colorful-light aside.bg-cardBg { background:linear-gradient(180deg,#312e81 0%,#6d28d9 55%,#be185d 100%) !important; border:none !important; border-radius:0; box-shadow:4px 0 24px rgba(49,46,129,.35) !important; }
+        body.theme-colorful-light header.bg-cardBg { background:linear-gradient(90deg,#4338ca,#be185d) !important; border:none !important; border-radius:0; box-shadow:0 4px 16px rgba(67,56,202,.35) !important; }
+        body.theme-colorful-light aside .text-white, body.theme-colorful-light header .text-white, body.theme-colorful-light aside h1 { color:#fff !important; }
+        body.theme-colorful-light aside .border-gray-800 { border-color:rgba(255,255,255,.18) !important; }
+        body.theme-colorful-light header .text-gray-400 { color:#fff !important; }
+        body.theme-colorful-light aside .bg-accent { background:linear-gradient(135deg,#fbbf24,#f472b6) !important; color:#fff !important; }
+        body.theme-colorful-light .nav-item { width:calc(100% - 1rem) !important; margin:0 .5rem; border-radius:.8rem; color:rgba(255,255,255,.82) !important; transition:all .2s; }
+        body.theme-colorful-light .nav-item { background:transparent; border:0; }
+        body.theme-colorful-light .nav-item::before { display:none; }
+        body.theme-colorful-light .nav-item:hover { background:rgba(255,255,255,.16) !important; color:#fff !important; }
+        body.theme-colorful-light .nav-item.active { background:#fff !important; color:#4338ca !important; text-shadow:none; font-weight:700; box-shadow:0 6px 16px -4px rgba(0,0,0,.35); }
+        body.theme-colorful-light #nav-master-attendance svg { color:#93c5fd; } body.theme-colorful-light #nav-mdm-register svg { color:#fdba74; }
+        body.theme-colorful-light #nav-rice-register svg { color:#86efac; }     body.theme-colorful-light #nav-millet-laddoo svg { color:#f9a8d4; }
+        body.theme-colorful-light #nav-abstract-format svg { color:#c4b5fd; }   body.theme-colorful-light #nav-settings svg { color:#5eead4; }
+        body.theme-colorful-light .nav-item.active svg { color:var(--a1) !important; }
+        body.theme-colorful-light #quick-theme-btn { background:rgba(255,255,255,.18) !important; color:#fff !important; border:1px solid rgba(255,255,255,.35) !important; box-shadow:none !important; }
+
+        /* buttons */
+        body.theme-colorful-light .bg-accent, body.theme-colorful-light button.bg-accent { background:linear-gradient(135deg,var(--a1),var(--a2)) !important; color:#fff !important; border:none !important; box-shadow:0 8px 18px -6px var(--ring), 0 2px 4px rgba(15,23,42,.15) !important; }
+        body.theme-colorful-light button.bg-accent:hover { filter:brightness(1.08); transform:translateY(-1px); }
+        body.theme-colorful-light button.bg-\[\#1a1c1e\] { background:#fff !important; color:var(--a1) !important; border:1.5px solid var(--a1) !important; box-shadow:none !important; font-weight:700; }
+        body.theme-colorful-light button.bg-\[\#1a1c1e\]:hover { background:var(--tint) !important; transform:translateY(-1px); }
+        body.theme-colorful-light button.bg-\[\#f59e0b\] { background:linear-gradient(135deg,#f59e0b,#f97316) !important; color:#fff !important; border:none !important; box-shadow:0 8px 18px -6px rgba(249,115,22,.5) !important; }
+
+        /* tables */
+        body.theme-colorful-light .poshan-table { border-color:#94a3b8 !important; }
+        body.theme-colorful-light .poshan-table th { background:linear-gradient(135deg,var(--a1),var(--a2)) !important; color:#fff !important; border-color:rgba(255,255,255,.35) !important; font-weight:700; }
+        body.theme-colorful-light .poshan-table td { border-color:#cbd5e1 !important; }
+        body.theme-colorful-light .poshan-table th:first-child, body.theme-colorful-light .poshan-table td:first-child { border-left-color:#cbd5e1 !important; }
+        body.theme-colorful-light .poshan-table tbody tr:nth-child(even) { background:#f8fafc; }
+        body.theme-colorful-light .poshan-table tbody tr:hover { background:var(--tint); }
+        body.theme-colorful-light .poshan-table tbody tr.bg-\[\#1f2937\] { background:#fff1f2 !important; }
+        body.theme-colorful-light .poshan-table tbody tr.bg-\[\#1f2937\] td { color:#be123c; }
+        body.theme-colorful-light .poshan-table tfoot td { background:var(--tint) !important; font-weight:800; border-top:2px solid var(--a1) !important; }
+
+        /* inputs */
+        body.theme-colorful-light .poshan-input { background:#fff !important; border:1.5px solid #cbd5e1 !important; color:#0f172a !important; border-radius:.6rem; backdrop-filter:none !important; }
+        body.theme-colorful-light .poshan-input:focus { border-color:var(--a1) !important; box-shadow:0 0 0 3px var(--ring) !important; background:#fff !important; }
+        body.theme-colorful-light .poshan-input:disabled { background:#f1f5f9 !important; }
+        body.theme-colorful-light #set-school-name { background:#fff !important; color:#0f172a !important; border-color:var(--a1) !important; box-shadow:0 0 0 3px var(--ring) !important; }
+        body.theme-colorful-light input[type="checkbox"] { background-color:#fff; border:1.5px solid #94a3b8; }
+        body.theme-colorful-light input[type="checkbox"]:checked { background-color:var(--a1); border-color:var(--a1); box-shadow:none; }
+        body.theme-colorful-light ::-webkit-scrollbar-track { background:#f1f5f9; }
+        body.theme-colorful-light ::-webkit-scrollbar-thumb { background:#c7d2fe; border:none; }
+
+        /* colourful summary tiles on Abstract tab */
+        body.theme-colorful-light #abstract-format > .grid > div { border:none !important; border-radius:1rem; }
+        body.theme-colorful-light #abstract-format > .grid > div:nth-child(1) { background:linear-gradient(135deg,#3b82f6,#06b6d4) !important; }
+        body.theme-colorful-light #abstract-format > .grid > div:nth-child(2) { background:linear-gradient(135deg,#10b981,#84cc16) !important; }
+        body.theme-colorful-light #abstract-format > .grid > div:nth-child(3) { background:linear-gradient(135deg,#f97316,#f59e0b) !important; }
+        body.theme-colorful-light #abstract-format > .grid > div:nth-child(4) { background:linear-gradient(135deg,#8b5cf6,#ec4899) !important; }
+        body.theme-colorful-light #abstract-format > .grid p, body.theme-colorful-light #abstract-format > .grid span { color:#fff !important; }
+        body.theme-colorful-light #abstract-format > .grid p.text-sm { opacity:.9; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* =====================================================
+           RESPONSIVE LAYOUT: phone, tablet, desktop (all themes)
+           ===================================================== */
+        #sidebar-backdrop { display:none; }
+        html, body { max-width:100%; }
+        .tab-content .overflow-x-auto { -webkit-overflow-scrolling:touch; overscroll-behavior-x:contain; }
+
+        /* ---- Tablet: 768px - 1023px ---- */
+        @media (min-width: 768px) and (max-width: 1023.98px) {
+            aside { width:14rem !important; }
+            .nav-item { padding-left:1.1rem !important; padding-right:1rem !important; font-size:.92rem; }
+            main > .flex-1.overflow-y-auto { padding:1.25rem !important; }
+            .poshan-table { font-size:.82rem; }
+            .poshan-table th, .poshan-table td { padding:.65rem .5rem; }
+        }
+
+        /* ---- Phone: up to 767px ---- */
+        @media (max-width: 767.98px) {
+            body { height:100vh; height:100dvh; }
+            /* sidebar becomes a slide-in drawer */
+            aside { position:fixed !important; top:0; left:0; bottom:0; width:min(82vw,18rem) !important; z-index:60 !important;
+                    transform:translateX(-105%); transition:transform .3s ease !important; padding-top:env(safe-area-inset-top);
+                    padding-bottom:env(safe-area-inset-bottom); }
+            body.sidebar-open aside { transform:translateX(0); }
+            body.theme-emerald-glass aside, body.theme-ocean-glass aside { background:rgba(8,14,12,.97) !important; }
+            #sidebar-backdrop { display:block; position:fixed; inset:0; z-index:50; background:rgba(0,0,0,.5); opacity:0; pointer-events:none; transition:opacity .3s; }
+            body.sidebar-open #sidebar-backdrop { opacity:1; pointer-events:auto; }
+            main { width:100%; min-width:0; }
+            main > header { padding:.7rem 1rem !important; padding-top:calc(.7rem + env(safe-area-inset-top)) !important; flex-shrink:0; }
+            main > header button { min-width:44px; min-height:44px; display:flex; align-items:center; justify-content:center; }
+            main > .flex-1.overflow-y-auto { padding:.75rem !important; padding-bottom:calc(1.5rem + env(safe-area-inset-bottom)) !important; }
+
+            /* headings and cards */
+            .tab-content h2 { font-size:1.3rem !important; margin-bottom:.9rem !important; }
+            .tab-content h3 { font-size:1.05rem !important; }
+            .tab-content .p-6 { padding:1rem !important; }
+            .tab-content .mb-8 { margin-bottom:1.1rem !important; }
+            .tab-content .gap-4 { gap:.75rem !important; }
+            .tab-content .text-2xl { font-size:1.35rem !important; }
+
+            /* controls: full width, easy to tap */
+            .tab-content input, .tab-content select { font-size:16px !important; }
+            .tab-content .poshan-input.w-40, .tab-content input.w-40, .tab-content .md\:w-48 { width:100% !important; }
+            .tab-content .flex.flex-wrap.gap-4 > div { flex:1 1 100%; min-width:0; }
+            .tab-content .flex.gap-3, .tab-content .flex.items-center.gap-3 { flex-wrap:wrap; }
+            .tab-content .flex.gap-3 > button { flex:1 1 30%; min-height:46px; white-space:nowrap; }
+            .tab-content .flex.items-center.gap-3 > select { flex:1 1 100%; }
+            .tab-content .flex.items-center.gap-3 > button { flex:1 1 40%; min-height:44px; }
+            .tab-content button { min-height:44px; }
+            #abstract-format .flex-wrap > button { flex:1 1 40% !important; min-width:0 !important; }
+
+            /* tables: compact, scroll sideways inside their card */
+            .poshan-table { font-size:.76rem; min-width:560px; }
+            .poshan-table th, .poshan-table td { padding:.5rem .4rem; }
+            .poshan-table td .text-xs { font-size:.68rem; }
+            #master-attendance .poshan-table { min-width:520px; }
+            #mdm-register .poshan-table, #millet-laddoo .poshan-table { min-width:760px; }
+            #rice-register .poshan-table { min-width:640px; }
+            #main-abstract-table, #egg-statement-table table { min-width:0; font-size:.8rem; }
+            #main-abstract-table td, #main-abstract-table th, #egg-statement-table td, #egg-statement-table th { padding:.5rem .4rem; }
+            #main-abstract-table th.w-1\/2 { width:44%; }
+            .poshan-table input.poshan-input, .poshan-table .poshan-input { padding:.4rem .3rem; min-width:60px; font-size:15px !important; }
+            .poshan-table input.w-24, .poshan-table input.w-20, .poshan-table input.w-16 { width:100% !important; max-width:6rem; }
+            .poshan-table .whitespace-nowrap { white-space:nowrap; }
+            .tab-content .overflow-x-auto { border-radius:.75rem; }
+
+            /* abstract summary tiles: 2 x 2 */
+            #abstract-format > .grid { grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:.6rem !important; margin-bottom:1rem !important; }
+            #abstract-format > .grid > div { padding:.75rem !important; }
+            #abstract-format > .grid .text-3xl { font-size:1.3rem !important; }
+            #abstract-format > .grid .text-sm { font-size:.72rem !important; }
+            #abstract-school-name, #abs-school-name { font-size:1rem !important; line-height:1.3; }
+
+            /* settings */
+            #settings .p-4 { padding:.75rem !important; }
+            #set-school-name { font-size:16px !important; padding:.7rem !important; }
+        }
+
+        /* very small phones */
+        @media (max-width: 380px) {
+            .tab-content .flex.gap-3 > button { flex:1 1 45%; }
+            .poshan-table { font-size:.72rem; }
+        }
+
+        /* phone in landscape */
+        @media (max-width: 900px) and (orientation: landscape) and (max-height: 500px) {
+            aside { width:16rem !important; }
+            .nav-item { padding-top:.5rem !important; padding-bottom:.5rem !important; }
+        }
+
+        /* ---- Hide / show side menu ---- */
+        .side-toggle-btn { width:34px; height:34px; flex-shrink:0; border-radius:.6rem; display:flex; align-items:center; justify-content:center;
+                           color:#e5e7eb; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.25); font-size:.95rem; line-height:1; transition:all .2s; }
+        .side-toggle-btn:hover { background:rgba(255,255,255,.25); color:#fff; }
+        #sidebar-show-btn { display:none; position:fixed; top:.75rem; left:.75rem; z-index:45; align-items:center; gap:.4rem; padding:.55rem .9rem;
+                            border-radius:.8rem; font-weight:700; font-size:.9rem; cursor:pointer; }
+        @media (min-width: 768px) {
+            body.sidebar-collapsed aside { width:0 !important; min-width:0 !important; padding:0 !important; border:0 !important; overflow:hidden; opacity:0; pointer-events:none; box-shadow:none !important; }
+            body.sidebar-collapsed #sidebar-show-btn { display:flex; }
+            body.sidebar-collapsed main > .flex-1.overflow-y-auto { padding-top:3.6rem !important; }
+        }
+        @media (max-width: 767.98px) { #sidebar-show-btn { display:none !important; } }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden theme-emerald-glass">
+
+    <div id="sidebar-backdrop" onclick="toggleSidebar()"></div>
+    <button id="sidebar-show-btn" onclick="showSidebar()" title="Show menu" aria-label="Show menu" class="bg-accent text-white">&#9776; Menu</button>
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 bg-cardBg border-r border-gray-800 flex flex-col h-full flex-shrink-0 transition-all duration-300 z-20">
+        <div class="p-4 border-b border-gray-800 flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-white font-bold">P</div>
+            <h1 class="text-lg font-bold text-white tracking-tight leading-tight">Mukhyamantri<br>Posan Register</h1>
+            <button id="sidebar-hide-btn" onclick="hideSidebar()" title="Hide menu" aria-label="Hide menu" class="side-toggle-btn ml-auto">&#10094;</button>
+        </div>
+        <nav class="flex-1 overflow-y-auto py-4">
+            <ul class="space-y-1">
+                <li><button onclick="switchTab('master-attendance')" id="nav-master-attendance" class="nav-item w-full text-left px-6 py-3 text-gray-400 hover:bg-gray-800 hover:text-white transition-colors flex items-center gap-3"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>Master Attendance</button></li>
+                <li><button onclick="switchTab('mdm-register')" id="nav-mdm-register" class="nav-item w-full text-left px-6 py-3 text-gray-400 hover:bg-gray-800 hover:text-white transition-colors flex items-center gap-3"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>MDM Item Register</button></li>
+                <li><button onclick="switchTab('rice-register')" id="nav-rice-register" class="nav-item w-full text-left px-6 py-3 text-gray-400 hover:bg-gray-800 hover:text-white transition-colors flex items-center gap-3"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>Rice Register</button></li>
+                <li><button onclick="switchTab('millet-laddoo')" id="nav-millet-laddoo" class="nav-item w-full text-left px-6 py-3 text-gray-400 hover:bg-gray-800 hover:text-white transition-colors flex items-center gap-3"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 11V9a2 2 0 00-2-2m2 4v4a2 2 0 104 0v-1m-4-3H9m2 0h4m6 1a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>Millet Ladoo Register</button></li>
+                <li><button onclick="switchTab('abstract-format')" id="nav-abstract-format" class="nav-item w-full text-left px-6 py-3 text-gray-400 hover:bg-gray-800 hover:text-white transition-colors flex items-center gap-3"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>Abstract Format</button></li>
+                <li><button onclick="switchTab('settings')" id="nav-settings" class="nav-item w-full text-left px-6 py-3 text-gray-400 hover:bg-gray-800 hover:text-white transition-colors flex items-center gap-3"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>Settings</button></li>
+            </ul>
+        </nav>
+        <div class="p-3 border-t border-gray-800 space-y-2">
+            <button id="pwa-install-btn" onclick="triggerPWAInstall()" class="w-full text-sm font-semibold py-2 px-3 rounded-md bg-accent text-white transition-colors flex items-center justify-center gap-2 shadow-md">
+                <span id="pwa-install-dot" class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                <span id="pwa-install-label">📲 Install App</span>
+            </button>
+            <button id="quick-theme-btn" onclick="quickToggleTheme()" class="w-full text-sm font-semibold py-2 px-3 rounded-md bg-[#1a1c1e] text-white border border-gray-700 transition-colors">🎨 Colourful Look</button>
+            <div id="net-status-badge" class="text-[11px] text-center text-gray-400 font-medium pt-0.5">🟢 Ready Offline</div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden bg-appBg">
+        
+        <!-- Mobile Header -->
+        <header class="md:hidden flex items-center justify-between p-4 bg-cardBg border-b border-gray-800">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-white font-bold">P</div>
+                <h1 class="text-lg font-bold text-white">Posan Register</h1>
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="pwa-install-mobile-btn" onclick="triggerPWAInstall()" title="Install App" class="text-xs font-bold px-2.5 py-1.5 rounded-md bg-accent text-white shadow">📲 Install</button>
+                <button onclick="toggleSidebar()" aria-label="Menu" class="text-gray-400 p-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-4 md:p-8">
+            
+            <!-- Tab: Master Attendance -->
+            <div id="master-attendance" class="tab-content max-w-4xl mx-auto">
+                <h2 class="text-2xl font-bold text-white mb-6">Master Attendance</h2>
+                
+                <div class="bg-cardBg rounded-xl border border-gray-800 p-6 mb-6 shadow-lg flex flex-col gap-4">
+                    <div class="flex flex-col md:flex-row justify-between items-end gap-4">
+                        <div class="flex flex-wrap gap-4 w-full md:w-auto">
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-1">Select Month</label>
+                                <input type="month" id="att-month-select" class="poshan-input poshan-input-left w-full md:w-44 text-base p-2 bg-[#121415]" onchange="renderAttendance()" />
+                            </div>
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-1">Entry Mode</label>
+                                <select id="att-entry-mode" class="poshan-input poshan-input-left text-sm p-2.5 bg-[#121415]" onchange="updateAttendanceEntryMode()">
+                                    <option value="both">⇄ Both-Way (IX/X ↔ Total)</option>
+                                    <option value="total">∑ Total Entry → Auto Split</option>
+                                    <option value="class">✎ Class-wise (IX &amp; X → Total)</option>
+                                </select>
+                            </div>
+                            <div id="att-split-wrap">
+                                <label class="block text-sm text-gray-400 mb-1">Auto-Split Ratio</label>
+                                <select id="att-split-ratio" class="poshan-input poshan-input-left text-sm p-2.5 bg-[#121415]" onchange="saveAttendancePrefs()">
+                                    <option value="proportional">⚖️ Roll Strength Proportional</option>
+                                    <option value="0.5">50% IX / 50% X (Equal)</option>
+                                    <option value="0.55">55% IX / 45% X</option>
+                                    <option value="0.6">60% IX / 40% X</option>
+                                    <option value="0.45">45% IX / 55% X</option>
+                                    <option value="0.4">40% IX / 60% X</option>
+                                </select>
+                            </div>
+                            <div class="flex items-end gap-2">
+                                <div id="att-roll-fields" class="flex items-end gap-2">
+                                    <div>
+                                        <label class="block text-sm text-gray-400 mb-1">Roll IX</label>
+                                        <input type="number" min="0" id="att-roll-ix" placeholder="IX" class="poshan-input w-20 text-base p-2 bg-[#121415]" oninput="onRollStrengthChange('att')" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm text-gray-400 mb-1">Roll X</label>
+                                        <input type="number" min="0" id="att-roll-x" placeholder="X" class="poshan-input w-20 text-base p-2 bg-[#121415]" oninput="onRollStrengthChange('att')" />
+                                    </div>
+                                    <div class="pb-2 text-xs font-semibold text-accent whitespace-nowrap">
+                                        Total Roll: <span id="att-roll-total">0</span>
+                                    </div>
+                                </div>
+                                <button type="button" id="att-roll-toggle-btn" onclick="toggleRollStrengthBox()" class="mb-0.5 text-xs font-semibold px-2.5 py-2 rounded-md bg-[#1a1c1e] hover:bg-gray-800 border border-gray-700 text-gray-300 whitespace-nowrap transition-colors">👁 Hide Roll</button>
+                            </div>
+                        </div>
+                        <div class="w-full md:w-auto flex gap-3">
+                            <button onclick="exportData('excel', 'master-attendance', 'Master_Attendance', 'portrait')" class="bg-[#1a1c1e] hover:bg-gray-800 border border-gray-700 text-white font-semibold py-2.5 px-4 rounded-md transition-colors">⬇ Excel</button>
+                            <button onclick="exportData('pdf', 'master-attendance', 'Master_Attendance', 'portrait')" class="bg-[#1a1c1e] hover:bg-gray-800 border border-gray-700 text-white font-semibold py-2.5 px-4 rounded-md transition-colors">⬇ PDF</button>
+                            <button onclick="clearMonthAttendance()" class="w-full md:w-auto bg-red-600/80 hover:bg-red-600 text-white font-semibold py-2.5 px-5 rounded-md transition-colors shadow-md">🗑 Clear Form</button>
+                        </div>
+                    </div>
+                    <p id="att-mode-hint" class="text-xs text-gray-400">
+                        💡 <b>Both-Way Active:</b> Enter <b>Class IX &amp; X</b> to auto-sum Total, OR enter <b>Total Attendance</b> directly to auto-split into Class IX &amp; X.
+                    </p>
+                </div>
+
+                <div class="bg-cardBg rounded-xl border border-gray-800 overflow-hidden shadow-lg">
+                    <div class="overflow-x-auto">
+                        <table class="poshan-table">
+                            <thead>
+                                <tr>
+                                    <th>Date (DD-MM-YYYY)</th>
+                                    <th>Day</th>
+                                    <th>Status</th>
+                                    <th>Class IX</th>
+                                    <th>Class X</th>
+                                    <th class="text-accent">Total Attendance</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attendance-list">
+                                <!-- Dynamic Content -->
+                            </tbody>
+                            <tfoot id="attendance-footer" class="font-bold bg-[#1f2937]">
+                                <!-- Monthly Totals -->
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: MDM Register -->
+            <div id="mdm-register" class="tab-content max-w-6xl mx-auto">
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+                    <h2 class="text-2xl font-bold text-white">MDM All Item Register</h2>
+                    <div class="flex items-center gap-3 w-full sm:w-auto">
+                        <select id="mdm-month-filter" class="poshan-input w-full sm:w-48 poshan-input-left" onchange="renderMDMRegister()">
+                            <!-- Options generated by JS -->
+                        </select>
+                        <button onclick="exportData('excel', 'mdm-register', 'MDM_Item_Register', 'landscape')" class="bg-[#1a1c1e] hover:bg-gray-800 border border-gray-700 text-white font-semibold py-2 px-4 rounded-md transition-colors">⬇ Excel</button>
+                        <button onclick="exportData('pdf', 'mdm-register', 'MDM_Item_Register', 'landscape')" class="bg-[#1a1c1e] hover:bg-gray-800 border border-gray-700 text-white font-semibold py-2 px-4 rounded-md transition-colors">⬇ PDF</button>
+                    </div>
+                </div>
+                
+                <div class="bg-cardBg rounded-xl border border-gray-800 overflow-hidden shadow-lg">
+                    <div class="overflow-x-auto">
+                        <table class="poshan-table text-xs">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>IX</th>
+                                    <th>X</th>
+                                    <th>Total</th>
+                                    <th>Rice (kg)</th>
+                                    <th>Vegetable (kg)</th>
+                                    <th>Oil (L)</th>
+                                    <th>Fuel (qty)</th>
+                                    <th>Egg (pc)</th>
+                                    <th>Soya (kg)</th>
+                                    <th>Dal (kg)</th>
+                                    <th>Laddoo (pc)</th>
+                                    <th>Remark</th>
+                                </tr>
+                            </thead>
+                            <tbody id="mdm-register-list">
+                                <!-- Dynamic Content -->
+                            </tbody>
+                            <tfoot id="mdm-register-footer" class="font-bold bg-[#1f2937]">
+                                <!-- Totals -->
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Rice Register -->
+            <div id="rice-register" class="tab-content max-w-6xl mx-auto">
+                <h2 class="text-2xl font-bold text-white mb-6">Rice Stock Register</h2>
+                
+                <div class="bg-cardBg rounded-xl border border-gray-800 p-6 mb-8 shadow-lg flex flex-col md:flex-row justify-between items-end gap-4">
+                    <div class="flex flex-wrap gap-4 w-full md:w-auto">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Select Month</label>
+                            <input type="month" id="rice-month-select" class="poshan-input poshan-input-left w-full md:w-48 text-lg p-2 bg-[#121415]" onchange="renderRiceRegister()" />
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Opening Balance (kg)</label>
+                            <input type="number" id="rice-opening-balance" min="0" step="0.01" class="poshan-input poshan-input-left w-40 text-lg bg-[#121415]" onchange="saveRiceOpeningBalance()" />
+                        </div>
+                    </div>
+                    <div class="w-full md:w-auto flex gap-3">
+                        <button onclick="exportData('excel', 'rice-register', 'Rice_Register', 'portrait')" class="bg-[#1a1c1e] hover:bg-gray-800 border border-gray-700 text-white font-semibold py-2 px-4 rounded-md transition-colors">⬇ Excel</button>
+                        <button onclick="exportData('pdf', 'rice-register', 'Rice_Register', 'portrait')" class="bg-[#1a1c1e] hover:bg-gray-800 border border-gray-700 text-white font-semibold py-2 px-4 rounded-md transition-colors">⬇ PDF</button>
+                    </div>
+                </div>
+
+                <div class="bg-cardBg rounded-xl border border-gray-800 overflow-hidden shadow-lg">
+                    <div class="overflow-x-auto">
+                        <table class="poshan-table text-sm">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Day</th>
+                                    <th>Present IX</th>
+                                    <th>Present X</th>
+                                    <th>Opening Balance (kg)</th>
+                                    <th class="text-blue-400">Received (kg)</th>
+                                    <th class="text-orange-400">Consumed (kg)</th>
+                                    <th class="text-accent">Closing Balance (kg)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rice-register-list">
+                                <!-- Dynamic Content -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Abstract Format -->
+            <div id="abstract-format" class="tab-content max-w-5xl mx-auto pb-12">
+                
+                <!-- Top Controls -->
+                <div class="flex flex-col sm:flex-row justify-between gap-4 mb-6">
+                    <div class="w-full sm:w-1/2">
+                        <label class="block text-sm text-gray-400 mb-1">Month</label>
+                        <input type="month" id="abs-month-select" class="poshan-input poshan-input-left w-full text-lg p-3 bg-cardBg border-gray-800" onchange="renderAbstract()" />
+                    </div>
+                    <div class="w-full sm:w-1/2 flex flex-col justify-end">
+                        <label class="block text-sm text-gray-400 mb-1">Norm settings</label>
+                        <button onclick="switchTab('settings')" class="w-full bg-[#1a1c1e] hover:bg-gray-800 border border-gray-700 text-white font-semibold py-3 px-4 rounded-md transition-colors flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            Set norms & prices
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Summary Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                    <div class="bg-cardBg rounded-xl border border-gray-800 p-4 shadow-sm">
+                        <p class="text-sm text-gray-400 mb-1">Meals served · Secondary (IX–X)</p>
+                        <p class="text-3xl font-bold text-white" id="abs-summary-meals">0</p>
+                    </div>
+                    <div class="bg-cardBg rounded-xl border border-gray-800 p-4 shadow-sm">
+                        <p class="text-sm text-gray-400 mb-1">Meal days</p>
+                        <p class="text-3xl font-bold text-white" id="abs-summary-days">0</p>
+                    </div>
+                    <div class="bg-cardBg rounded-xl border border-gray-800 p-4 shadow-sm">
+                        <p class="text-sm text-gray-400 mb-1">Rice consumed</p>
+                        <p class="text-3xl font-bold text-white"><span id="abs-summary-rice">0.000</span> <span class="text-lg text-gray-400">kg</span></p>
+                    </div>
+                    <div class="bg-cardBg rounded-xl border border-gray-800 p-4 shadow-sm">
+                        <p class="text-sm text-gray-400 mb-1">Total amount (₹)</p>
+                        <p class="text-3xl font-bold text-white" id="abs-summary-amount">0.00</p>
+                    </div>
+                </div>
+
+                <!-- Main Section Header -->
+                <div class="mb-4">
+                    <h2 class="text-xl font-bold text-white uppercase tracking-wider" id="abs-school-name">GOVT. U.G. HIGH SCHOOL MALDA</h2>
+                    <p class="text-gray-400 text-sm mt-1" id="abs-subtitle">November 2026 · Abstract consumption · Item-wise monthly</p>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-wrap gap-3 mb-4" data-html2canvas-ignore="true">
+                    <button onclick="exportData('excel', 'abstract-format', 'Abstract_Format', 'portrait')" class="flex-1 min-w-[120px] bg-[#1a1c1e] hover:bg-gray-800 border border-gray-700 text-white font-semibold py-2 px-4 rounded-md transition-colors">⬇ Export Excel</button>
+                    <button onclick="exportData('pdf', 'abstract-format', 'Abstract_Format', 'portrait')" class="flex-1 min-w-[120px] bg-[#1a1c1e] hover:bg-gray-800 border border-gray-700 text-white font-semibold py-2 px-4 rounded-md transition-colors">⬇ Export PDF</button>
+                    <button onclick="exportData('print', 'abstract-format', 'Abstract_Format', 'portrait')" class="flex-1 min-w-[120px] bg-[#f59e0b] hover:bg-[#d97706] text-black font-bold py-2 px-4 rounded-md transition-colors">Print</button>
+                </div>
+
+                <!-- Abstract Multi-Table -->
+                <div class="bg-cardBg rounded-xl border border-borderGreen overflow-hidden shadow-lg mb-4">
+                    <div class="overflow-x-auto">
+                        <table class="poshan-table w-full text-left" id="main-abstract-table">
+                            <thead>
+                                <tr>
+                                    <th class="w-1/2">Item</th>
+                                    <th>Unit</th>
+                                    <th class="text-right">Quantity</th>
+                                    <th class="text-right">Amount (₹)</th>
+                                </tr>
+                            </thead>
+                            <!-- A. Daily Meal Items -->
+                            <tbody class="border-b-2 border-borderGreen">
+                                <tr>
+                                    <td colspan="4" class="font-bold bg-[#15201c] text-white">A. Daily meal items</td>
+                                </tr>
+                                <tr><td>Meals served</td><td>nos</td><td class="text-right font-bold text-white" id="t-meals-qty">0</td><td class="text-right bg-[#121415]"></td></tr>
+                                <tr><td>Rice</td><td>kg</td><td class="text-right font-bold text-white" id="t-rice-qty">0.000</td><td class="text-right font-bold text-white">Free</td></tr>
+                                <tr><td>Dal</td><td>kg</td><td class="text-right font-bold text-white" id="t-dal-qty">0.000</td><td class="text-right font-bold text-white" id="t-dal-amt">0.00</td></tr>
+                                <tr><td>Soya chunks</td><td>kg</td><td class="text-right font-bold text-white" id="t-soya-qty">0.000</td><td class="text-right font-bold text-white" id="t-soya-amt">0.00</td></tr>
+                                <tr><td>Oil</td><td>kg</td><td class="text-right font-bold text-white" id="t-oil-qty">0.000</td><td class="text-right font-bold text-white" id="t-oil-amt">0.00</td></tr>
+                                <tr><td>Vegetables (auto adjust)</td><td>kg</td><td class="text-right font-bold text-white" id="t-veg-qty">0.000</td><td class="text-right font-bold text-white" id="t-veg-amt">0.00</td></tr>
+                                <tr><td>Egg</td><td>pieces</td><td class="text-right font-bold text-white" id="t-egg-qty">0</td><td class="text-right font-bold text-white" id="t-egg-amt">0.00</td></tr>
+                                <tr><td>Laddoo</td><td>pieces</td><td class="text-right font-bold text-white" id="t-lad-qty">0</td><td class="text-right font-bold text-white" id="t-lad-amt">0.00</td></tr>
+                                <tr><td>Fuel</td><td>₹</td><td class="bg-[#121415]"></td><td class="text-right font-bold text-white" id="t-fuel-amt">0.00</td></tr>
+                                <tr><td>Salt & condiment</td><td>₹</td><td class="bg-[#121415]"></td><td class="text-right font-bold text-white" id="t-salt-amt">0.00</td></tr>
+                                <tr class="bg-[#15201c]"><td colspan="3" class="font-bold text-white">TOTAL AMOUNT</td><td class="text-right font-bold text-white text-lg" id="t-total-amt">₹0.00</td></tr>
+                            </tbody>
+                            <!-- B. Millet laddoo ingredients -->
+                            <tbody class="border-b-2 border-borderGreen">
+                                <tr>
+                                    <td colspan="4" class="font-bold bg-[#15201c] text-white">B. Millet laddoo ingredients</td>
+                                </tr>
+                                <tr><td>Laddoos prepared</td><td>pieces</td><td class="text-right font-bold text-white" id="l-qty">0</td><td class="text-right font-bold text-white" id="l-amt">0.00</td></tr>
+                                <tr><td>Ragi flour</td><td>kg</td><td class="text-right font-bold text-white" id="l-ragi-qty">0.000</td><td class="text-right font-bold text-white" id="l-ragi-amt">0.00</td></tr>
+                                <tr><td>Wheat flour</td><td>kg</td><td class="text-right font-bold text-white" id="l-wheat-qty">0.000</td><td class="text-right font-bold text-white" id="l-wheat-amt">0.00</td></tr>
+                                <tr><td>Sesame</td><td>kg</td><td class="text-right font-bold text-white" id="l-sesame-qty">0.000</td><td class="text-right font-bold text-white" id="l-sesame-amt">0.00</td></tr>
+                                <tr><td>Raw sugar</td><td>kg</td><td class="text-right font-bold text-white" id="l-sugar-qty">0.000</td><td class="text-right font-bold text-white" id="l-sugar-amt">0.00</td></tr>
+                                <tr><td>Refined oil</td><td>kg</td><td class="text-right font-bold text-white" id="l-oil-qty">0.000</td><td class="text-right font-bold text-white" id="l-oil-amt">0.00</td></tr>
+                                <tr><td>Groundnut</td><td>kg</td><td class="text-right font-bold text-white" id="l-groundnut-qty">0.000</td><td class="text-right font-bold text-white" id="l-groundnut-amt">0.00</td></tr>
+                                <tr><td>Cardamom powder</td><td>kg</td><td class="text-right font-bold text-white" id="l-cardamom-qty">0.000</td><td class="text-right font-bold text-white" id="l-cardamom-amt">0.00</td></tr>
+                                <tr><td>Preparation cost</td><td>₹</td><td class="bg-[#121415]"></td><td class="text-right font-bold text-white" id="l-prep-amt">0.00</td></tr>
+                                <tr><td colspan="2" class="font-bold text-white">Total laddoo cost (ingredients + preparation)</td><td class="bg-[#121415]"></td><td class="text-right font-bold text-white" id="l-total-amt">0.00</td></tr>
+                            </tbody>
+                            <!-- C. Rice stock -->
+                            <tbody>
+                                <tr>
+                                    <td colspan="4" class="font-bold bg-[#15201c] text-white">C. Rice stock</td>
+                                </tr>
+                                <tr><td colspan="2">Opening stock</td><td>kg</td><td class="text-right font-bold text-white" id="r-open">0.000</td></tr>
+                                <tr><td colspan="2">Rice received</td><td>kg</td><td class="text-right font-bold text-white" id="r-received">0.000</td></tr>
+                                <tr><td colspan="2">Rice consumed</td><td>kg</td><td class="text-right font-bold text-white" id="r-consumed">0.000</td></tr>
+                                <tr><td colspan="2" class="font-bold text-white">Closing balance</td><td>kg</td><td class="text-right font-bold text-white" id="r-close">0.000</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <p class="text-xs text-gray-500 mb-10 leading-relaxed">
+                    Quantities come from the counts entered in the MDM tab, the weekly menu and the price chart. Amount = quantity × price per kg; vegetables take whatever is left of the per meal cost. Laddoo quantities follow the laddoo days in the weekly menu.
+                </p>
+
+                <!-- Egg Consumption Statement -->
+                <div class="bg-cardBg rounded-xl border border-gray-800 shadow-lg p-6">
+                    <h3 class="text-xl font-bold text-white mb-2">Egg consumption statement</h3>
+                    <p class="text-sm text-gray-400 mb-4" id="egg-subtitle">November 2026 · Date, day and number of eggs · ₹7.00 per egg</p>
+                    
+                    <div class="flex gap-3 mb-6" data-html2canvas-ignore="true">
+                        <button onclick="exportData('excel', 'egg-statement-table', 'Egg_Statement', 'portrait')" class="flex-1 bg-[#1a1c1e] hover:bg-gray-800 border border-gray-700 text-white font-semibold py-2 px-4 rounded-md transition-colors">⬇ Export Excel</button>
+                        <button onclick="exportData('pdf', 'egg-statement-table', 'Egg_Statement', 'portrait')" class="flex-1 bg-[#1a1c1e] hover:bg-gray-800 border border-gray-700 text-white font-semibold py-2 px-4 rounded-md transition-colors">⬇ Export PDF</button>
+                    </div>
+
+                    <div class="overflow-x-auto border border-borderGreen rounded" id="egg-statement-table">
+                        <table class="poshan-table w-full text-left">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Day</th>
+                                    <th>Eggs</th>
+                                    <th class="text-right">Amount (₹)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="egg-statement-body">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="2" class="font-bold text-white uppercase text-lg">TOTAL</td>
+                                    <td class="font-bold text-white text-lg" id="egg-total-qty">0</td>
+                                    <td class="font-bold text-white text-lg text-right" id="egg-total-amt">0.00</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Tab: Millet Laddoo Register -->
+            <div id="millet-laddoo" class="tab-content max-w-6xl mx-auto pb-12">
+                <h2 class="text-2xl font-bold text-white mb-6">Millet Ladoo Register</h2>
+                
+                <div class="bg-cardBg rounded-xl border border-gray-800 p-6 mb-8 shadow-lg flex flex-col md:flex-row justify-between items-end gap-4">
+                    <div class="w-full md:w-auto">
+                        <label class="block text-sm text-gray-400 mb-1">Select Month</label>
+                        <input type="month" id="laddoo-month-select" class="poshan-input poshan-input-left w-full md:w-48 text-lg p-2 bg-[#121415]" onchange="renderMilletLaddoo()" />
+                    </div>
+                    <div class="w-full md:w-auto flex gap-3">
+                        <button onclick="exportData('excel', 'millet-laddoo', 'Millet_Laddoo_Register', 'landscape')" class="bg-[#1a1c1e] hover:bg-gray-800 border border-gray-700 text-white font-semibold py-2 px-4 rounded-md transition-colors">⬇ Excel</button>
+                        <button onclick="exportData('pdf', 'millet-laddoo', 'Millet_Laddoo_Register', 'landscape')" class="bg-[#1a1c1e] hover:bg-gray-800 border border-gray-700 text-white font-semibold py-2 px-4 rounded-md transition-colors">⬇ PDF</button>
+                    </div>
+                </div>
+
+                <div class="bg-cardBg rounded-xl border border-borderGreen overflow-hidden shadow-lg">
+                    <div class="overflow-x-auto">
+                        <table class="poshan-table text-xs w-full">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Day</th>
+                                    <th>Laddoos Served<br>(nos)</th>
+                                    <th>Ragi flour<br>(kg)</th>
+                                    <th>Wheat flour<br>(kg)</th>
+                                    <th>Sesame<br>(kg)</th>
+                                    <th>Raw sugar<br>(kg)</th>
+                                    <th>Refined oil<br>(kg)</th>
+                                    <th>Groundnut<br>(kg)</th>
+                                    <th>Cardamom powd<br>(kg)</th>
+                                    <th class="text-right">Prep Cost<br>(₹)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="laddoo-register-list">
+                                <!-- Dynamic Content -->
+                            </tbody>
+                            <tfoot id="laddoo-register-footer" class="font-bold bg-[#15201c] text-white">
+                                <!-- Totals -->
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 mt-4 leading-relaxed">
+                    Quantities calculated per laddoo: Ragi 12g, Wheat 12g, Sesame 1g, Raw sugar 6g, Refined oil 2g, Groundnut 1g, Cardamom powder 0.04g, Prep Cost ₹0.26.
+                </p>
+            </div>
+
+            <!-- Tab: Settings (Mirroring Screenshots) -->
+            <div id="settings" class="tab-content max-w-3xl mx-auto pb-12">
+                <h2 class="text-2xl font-bold text-white mb-6">Configuration Settings</h2>
+                
+                <!-- App Appearance Card -->
+                <div class="bg-cardBg rounded-xl border border-gray-800 p-6 shadow-lg mb-8">
+                    <h3 class="text-lg font-bold text-white mb-4">App Appearance</h3>
+                    <div class="mb-2">
+                        <label class="block text-sm text-gray-400 mb-2">Visual Theme & Glass Effect</label>
+                        <select id="set-theme" class="poshan-input poshan-input-left text-lg p-3 bg-[#121415] border-borderGreen focus:outline-none" onchange="saveTheme()">
+                            <option value="theme-emerald-glass">Emerald Glass (Default)</option>
+                            <option value="theme-ocean-glass">Ocean Glass (Blue Accent)</option>
+                            <option value="theme-slate-solid">Slate Solid (No Glass)</option>
+                            <option value="theme-colorful-light">Colourful Light (Normal Look)</option>
+                        </select>
+                        <p class="text-xs text-gray-500 mt-2">Changes the background style and color accents of the application.</p>
+                    </div>
+                </div>
+
+                <!-- School Info & Per Meal Cost -->
+                <div class="grid grid-cols-1 gap-6 mb-8">
+                    <!-- Per meal cost card -->
+                    <div class="bg-cardBg rounded-xl border border-gray-800 p-6 shadow-lg">
+                        <h3 class="text-lg font-bold text-white mb-4">Per meal cost</h3>
+                        <div class="mb-4">
+                            <p class="text-sm text-gray-400">Per student, per meal</p>
+                            <p class="text-2xl font-bold text-white">₹<span id="display-meal-cost">14.74</span></p>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-sm text-gray-400 mb-2">Edit per meal cost per student (₹)</label>
+                            <input type="number" id="set-meal-cost" step="0.01" class="poshan-input poshan-input-left text-lg p-3 bg-[#121415]" value="14.74" />
+                        </div>
+                        <button onclick="saveMealCost()" class="w-full bg-[#f59e0b] hover:bg-[#d97706] text-black font-semibold py-3 px-4 rounded-md transition-colors mb-2">Save per meal cost</button>
+                        <p class="text-xs text-gray-500">Used in every calculation. Vegetables take whatever is left after the other items ticked for the day.</p>
+                    </div>
+
+                    <!-- School card -->
+                <div class="bg-cardBg rounded-xl border border-gray-800 p-6 shadow-lg">
+                    <h3 class="text-lg font-bold text-white mb-4">School</h3>
+                    <div class="mb-4">
+                        <label class="block text-base text-accent font-bold mb-2">🏫 Change School Name</label>
+                        <input type="text" id="set-school-name" class="w-full text-lg p-3 rounded-md bg-[#1f2937] border-2 border-accent text-white font-bold shadow-[0_0_10px_rgba(16,185,129,0.3)] focus:outline-none focus:border-emerald-400 focus:bg-[#2a303c] transition-all" value="Govt. U.G. High School Malda" onchange="saveSchoolName()" />
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">Class IX Roll Strength</label>
+                            <input type="number" min="0" id="set-roll-ix" class="poshan-input poshan-input-left text-base p-3 bg-[#121415]" value="0" oninput="onRollStrengthChange('set')" />
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">Class X Roll Strength</label>
+                            <input type="number" min="0" id="set-roll-x" class="poshan-input poshan-input-left text-base p-3 bg-[#121415]" value="0" oninput="onRollStrengthChange('set')" />
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm text-gray-400 mb-2">Total enrolment, Class IX-X</label>
+                        <input type="number" id="set-enrolment" class="poshan-input poshan-input-left text-base p-3 bg-[#121415]" value="0" />
+                    </div>
+                    </div>
+                </div>
+
+                <!-- Price chart -->
+                <div class="bg-cardBg rounded-xl overflow-hidden mb-8 shadow-lg">
+                    <div class="p-4 border-b border-borderGreen bg-[#1a1c1e]">
+                        <h3 class="text-lg font-bold text-white">Price chart — Secondary (IX–X)</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="poshan-table">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Per student</th>
+                                    <th>Ration ₹</th>
+                                    <th>Price per kg ₹</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="font-medium text-white">Rice (g)</td>
+                                    <td><input type="number" id="pc-rice-qty" class="poshan-input w-24" value="200" onchange="savePriceChart()"></td>
+                                    <td>FREE</td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td class="font-medium text-white">Dal (g)</td>
+                                    <td><input type="number" id="pc-dal-qty" class="poshan-input w-24" value="30" onchange="savePriceChart()"></td>
+                                    <td id="pc-dal-ration" class="text-gray-300">3.45</td>
+                                    <td><input type="number" id="pc-dal-price" class="poshan-input w-24" value="115" onchange="savePriceChart()"></td>
+                                </tr>
+                                <tr>
+                                    <td class="font-medium text-white">Soya (g)</td>
+                                    <td><input type="number" id="pc-soya-qty" class="poshan-input w-24" value="25" onchange="savePriceChart()"></td>
+                                    <td id="pc-soya-ration" class="text-gray-300">4.00</td>
+                                    <td><input type="number" id="pc-soya-price" class="poshan-input w-24" value="160" onchange="savePriceChart()"></td>
+                                </tr>
+                                <tr>
+                                    <td class="font-medium text-white">Oil (ml)</td>
+                                    <td><input type="number" id="pc-oil-qty" class="poshan-input w-24" value="7.5" onchange="savePriceChart()"></td>
+                                    <td id="pc-oil-ration" class="text-gray-300">1.05</td>
+                                    <td><input type="number" id="pc-oil-price" class="poshan-input w-24" value="140" onchange="savePriceChart()"></td>
+                                </tr>
+                                <tr>
+                                    <td class="font-medium text-white">Vegetables (g)</td>
+                                    <td><input type="number" id="pc-veg-qty" class="poshan-input w-24" value="100" onchange="savePriceChart()"></td>
+                                    <td colspan="2" class="text-gray-400 italic">auto adjust</td>
+                                </tr>
+                                <tr>
+                                    <td class="font-medium text-white">Egg (pcs)</td>
+                                    <td><input type="number" id="pc-egg-qty" class="poshan-input w-24" value="1" onchange="savePriceChart()"></td>
+                                    <td id="pc-egg-ration" class="text-gray-300">7.00</td>
+                                    <td><input type="number" id="pc-egg-price" class="poshan-input w-24" value="7" onchange="savePriceChart()"></td>
+                                </tr>
+                                <tr>
+                                    <td class="font-medium text-white">Laddoo</td>
+                                    <td><input type="number" id="pc-laddoo-qty" class="poshan-input w-24" value="1" onchange="savePriceChart()"></td>
+                                    <td></td>
+                                    <td><input type="number" id="pc-laddoo-price" class="poshan-input w-24" value="3.5" onchange="savePriceChart()"></td>
+                                </tr>
+                                <tr>
+                                    <td class="font-medium text-white">Fuel</td>
+                                    <td><input type="number" id="pc-fuel-qty" class="poshan-input w-24" value="1" onchange="savePriceChart()"></td>
+                                    <td></td>
+                                    <td><input type="number" id="pc-fuel-price" class="poshan-input w-24" value="1" onchange="savePriceChart()"></td>
+                                </tr>
+                                <tr>
+                                    <td class="font-medium text-white">Salt & condiment</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td><input type="number" id="pc-salt-price" class="poshan-input w-24" value="0" onchange="savePriceChart()"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="p-4 bg-[#1a1c1e] text-xs text-gray-400 border-t border-borderGreen">
+                        Vegetables take whatever is left of the per meal cost after the other items ticked for the day. Egg, laddoo, fuel and condiment are ₹ per student.
+                    </div>
+                </div>
+
+                <!-- Vegetable auto adjust, by day (Display Only) -->
+                <div class="bg-cardBg rounded-xl overflow-hidden mb-8 shadow-lg">
+                    <div class="p-4 border-b border-borderGreen bg-[#1a1c1e]">
+                        <h3 class="text-lg font-bold text-white">Vegetable auto adjust, by day</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="poshan-table" id="table-veg-adjust">
+                            <thead>
+                                <tr>
+                                    <th>Day</th>
+                                    <th>Other items ₹</th>
+                                    <th>Veg ₹ per student</th>
+                                    <th>Veg ₹ per kg</th>
+                                </tr>
+                            </thead>
+                            <tbody id="veg-adjust-body">
+                                <!-- Populated by JS based on Weekly Menu -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Weekly menu -->
+                <div class="bg-cardBg rounded-xl overflow-hidden mb-8 shadow-lg">
+                    <div class="p-4 border-b border-borderGreen bg-[#1a1c1e]">
+                        <h3 class="text-lg font-bold text-white">Weekly menu</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="poshan-table" id="table-weekly-menu">
+                            <thead>
+                                <tr>
+                                    <th>Day</th>
+                                    <th>Rice</th>
+                                    <th>Vegetable</th>
+                                    <th>Oil</th>
+                                    <th>Fuel Cost</th>
+                                    <th>Egg</th>
+                                    <th>Dal</th>
+                                    <th>Soya</th>
+                                    <th>Laddoo</th>
+                                </tr>
+                            </thead>
+                            <tbody id="weekly-menu-body">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="p-4 bg-[#1a1c1e] text-xs text-gray-400 border-t border-borderGreen">
+                        Tick what is cooked each day. Sunday is a holiday unless you tick it open (observation day) in the MDM tab; tick the Sunday items here. Changes save on this phone and update the Calculator, MDM and Laddo tabs.
+                    </div>
+                </div>
+
+                <!-- Millet laddoo price chart -->
+                <div class="bg-cardBg rounded-xl overflow-hidden shadow-lg">
+                    <div class="p-4 border-b border-borderGreen bg-[#1a1c1e]">
+                        <h3 class="text-lg font-bold text-white">Millet laddoo price chart</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="poshan-table">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Amount in gram</th>
+                                    <th>Tentative cost ₹</th>
+                                    <th>Price per kg ₹</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><input type="text" value="Ragi flour" class="poshan-input poshan-input-left" readonly></td>
+                                    <td><input type="number" value="12" class="poshan-input w-16" readonly></td>
+                                    <td>1.80</td>
+                                    <td><input type="number" value="150" class="poshan-input w-20" readonly></td>
+                                    <td><button class="text-red-500 hover:text-red-400">✕</button></td>
+                                </tr>
+                                <tr>
+                                    <td><input type="text" value="Wheat flour" class="poshan-input poshan-input-left" readonly></td>
+                                    <td><input type="number" value="12" class="poshan-input w-16" readonly></td>
+                                    <td>0.50</td>
+                                    <td><input type="number" value="41.666" class="poshan-input w-20" readonly></td>
+                                    <td><button class="text-red-500 hover:text-red-400">✕</button></td>
+                                </tr>
+                                <tr>
+                                    <td><input type="text" value="Sesame" class="poshan-input poshan-input-left" readonly></td>
+                                    <td><input type="number" value="1" class="poshan-input w-16" readonly></td>
+                                    <td>0.14</td>
+                                    <td><input type="number" value="140" class="poshan-input w-20" readonly></td>
+                                    <td><button class="text-red-500 hover:text-red-400">✕</button></td>
+                                </tr>
+                                <tr>
+                                    <td><input type="text" value="Raw sugar" class="poshan-input poshan-input-left" readonly></td>
+                                    <td><input type="number" value="6" class="poshan-input w-16" readonly></td>
+                                    <td>0.27</td>
+                                    <td><input type="number" value="45" class="poshan-input w-20" readonly></td>
+                                    <td><button class="text-red-500 hover:text-red-400">✕</button></td>
+                                </tr>
+                                <tr>
+                                    <td><input type="text" value="Refined oil" class="poshan-input poshan-input-left" readonly></td>
+                                    <td><input type="number" value="2" class="poshan-input w-16" readonly></td>
+                                    <td>0.32</td>
+                                    <td><input type="number" value="160" class="poshan-input w-20" readonly></td>
+                                    <td><button class="text-red-500 hover:text-red-400">✕</button></td>
+                                </tr>
+                                <tr>
+                                    <td><input type="text" value="Groundnut" class="poshan-input poshan-input-left" readonly></td>
+                                    <td><input type="number" value="1" class="poshan-input w-16" readonly></td>
+                                    <td>0.15</td>
+                                    <td><input type="number" value="150" class="poshan-input w-20" readonly></td>
+                                    <td><button class="text-red-500 hover:text-red-400">✕</button></td>
+                                </tr>
+                                <tr>
+                                    <td><input type="text" value="Cardamom powd" class="poshan-input poshan-input-left" readonly></td>
+                                    <td><input type="number" value="0.04" class="poshan-input w-16" readonly></td>
+                                    <td>0.06</td>
+                                    <td><input type="number" value="1500" class="poshan-input w-20" readonly></td>
+                                    <td><button class="text-red-500 hover:text-red-400">✕</button></td>
+                                </tr>
+                                <tr>
+                                    <td class="font-bold text-white text-left">Preparation cost</td>
+                                    <td></td>
+                                    <td class="font-bold text-white">0.26</td>
+                                    <td colspan="2"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="p-4 bg-[#1a1c1e] border-t border-borderGreen">
+                        <button class="w-full bg-[#2a2d30] hover:bg-[#374151] border border-[#4b5563] text-white font-medium py-3 px-4 rounded-md transition-colors">Add ingredient</button>
+                    </div>
+                    <div class="p-4 bg-[#1a1c1e] text-xs text-gray-400 border-t border-borderGreen">
+                        Per laddo cost is ₹3.50 including preparation cost.
+                    </div>
+                </div>
+
+                <!-- Data Backup & Restore Card -->
+                <div class="bg-cardBg rounded-xl border border-gray-800 p-6 shadow-lg mt-8">
+                    <h3 class="text-lg font-bold text-white mb-2">💾 Data Backup &amp; Restore</h3>
+                    <p class="text-xs text-gray-400 mb-4">All attendance, rice stock, and register data is saved locally on this device. Export a JSON backup to transfer to another phone or keep a safe copy.</p>
+                    <div class="flex flex-wrap gap-3">
+                        <button onclick="exportBackupJSON()" class="bg-accent hover:bg-accentHover text-white font-semibold py-2.5 px-4 rounded-md transition-colors">📥 Export Backup (.json)</button>
+                        <button onclick="document.getElementById('import-backup-file').click()" class="bg-[#1a1c1e] hover:bg-gray-800 border border-gray-700 text-white font-semibold py-2.5 px-4 rounded-md transition-colors">📤 Restore Backup (.json)</button>
+                        <input type="file" id="import-backup-file" accept=".json,application/json" class="hidden" onchange="importBackupJSON(event)" />
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // --- State Management ---
+        const DEFAULT_STATE = {
+            theme: 'theme-emerald-glass',
+            schoolName: "Govt. U.G. High School Malda",
+            enrolment: 0,
+            mealCost: 14.74,
+            priceChart: {
+                rice: { qty: 200, price: 0 }, // g
+                dal: { qty: 30, price: 115 }, // g, kg
+                soya: { qty: 25, price: 160 }, // g, kg
+                oil: { qty: 7.5, price: 140 }, // ml, L
+                veg: { qty: 100 }, // g
+                egg: { qty: 1, price: 7 }, // pc, pc
+                laddoo: { qty: 1, price: 3.5 }, // pc, pc
+                fuel: { qty: 1, price: 1 },
+                salt: { price: 0 }
+            },
+            weeklyMenu: {
+                Sunday: { rice: false, vegetable: false, oil: false, fuelCost: false, egg: false, dal: false, soya: false, laddoo: false },
+                Monday: { rice: true, vegetable: true, oil: true, fuelCost: true, egg: true, dal: false, soya: false, laddoo: false },
+                Tuesday: { rice: true, vegetable: true, oil: true, fuelCost: true, egg: false, dal: false, soya: true, laddoo: true },
+                Wednesday: { rice: true, vegetable: true, oil: true, fuelCost: true, egg: true, dal: false, soya: false, laddoo: false },
+                Thursday: { rice: true, vegetable: true, oil: true, fuelCost: true, egg: false, dal: true, soya: false, laddoo: true },
+                Friday: { rice: true, vegetable: true, oil: true, fuelCost: true, egg: true, dal: false, soya: false, laddoo: false },
+                Saturday: { rice: true, vegetable: true, oil: true, fuelCost: true, egg: false, dal: false, soya: true, laddoo: true }
+            },
+            attendance: [], // { id, date, enrolled, present }
+            riceReceived: {}, // { 'YYYY-MM-DD': qty }
+            riceOpeningBalances: {} // { 'YYYY-MM': qty }
+        };
+
+        let appState = JSON.parse(localStorage.getItem('posanState')) || DEFAULT_STATE;
+        
+        // Ensure legacy states get new properties
+        if(!appState.riceReceived) {
+            appState.riceReceived = {};
+            if(appState.riceReceipts) {
+                // Migrate old receipt format if present
+                appState.riceReceipts.forEach(r => appState.riceReceived[r.date] = r.qty);
+            }
+        }
+        if(!appState.riceOpeningBalances) {
+            appState.riceOpeningBalances = {};
+            if(appState.riceOpeningBalance !== undefined) {
+                // Default legacy balance to current month if needed
+                const now = new Date();
+                const m = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2, '0')}`;
+                appState.riceOpeningBalances[m] = appState.riceOpeningBalance;
+            }
+        }
+        if(!appState.theme) {
+            appState.theme = 'theme-emerald-glass';
+        }
+
+        function saveState() {
+            localStorage.setItem('posanState', JSON.stringify(appState));
+        }
+        
+        function applyTheme() {
+            const keepOpen = ['sidebar-open','sidebar-collapsed'].filter(c => document.body.classList.contains(c)).map(c => ' ' + c).join('');
+            document.body.className = `flex h-screen overflow-hidden ${appState.theme}${keepOpen}`;
+            const light = appState.theme === 'theme-colorful-light';
+            const meta = document.querySelector('meta[name="theme-color"]');
+            if (meta) meta.setAttribute('content', light ? '#6366f1' : '#10b981');
+            const btn = document.getElementById('quick-theme-btn');
+            if (btn) btn.innerText = light ? '🌙 Glass Look' : '🎨 Colourful Look';
+            const sel = document.getElementById('set-theme');
+            if (sel) sel.value = appState.theme;
+        }
+
+        window.toggleSidebar = function() { document.body.classList.toggle('sidebar-open'); }
+        window.hideSidebar = function() {
+            if (window.innerWidth < 768) { document.body.classList.remove('sidebar-open'); return; }
+            document.body.classList.add('sidebar-collapsed');
+            appState.sidebarCollapsed = true; saveState();
+        }
+        window.showSidebar = function() {
+            document.body.classList.remove('sidebar-collapsed');
+            appState.sidebarCollapsed = false; saveState();
+        }
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') document.body.classList.remove('sidebar-open'); });
+
+        window.quickToggleTheme = function() {
+            appState.theme = appState.theme === 'theme-colorful-light' ? 'theme-emerald-glass' : 'theme-colorful-light';
+            saveState();
+            applyTheme();
+        }
+
+        window.saveTheme = function() {
+            appState.theme = document.getElementById('set-theme').value;
+            saveState();
+            applyTheme();
+        }
+
+        // --- Core Logic & Calculations ---
+        const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const menuItems = ['rice', 'vegetable', 'oil', 'fuelCost', 'egg', 'dal', 'soya', 'laddoo'];
+
+        function getDayName(dateString) {
+            const date = new Date(dateString);
+            return daysOfWeek[date.getDay()];
+        }
+
+        function calculateVegAdjustments() {
+            const adjustments = {};
+            daysOfWeek.forEach(day => {
+                const menu = appState.weeklyMenu[day];
+                let otherItemsCost = 0;
+                
+                // Calculate "Other items ₹" based on price chart and menu ticks
+                if(menu.dal) otherItemsCost += (appState.priceChart.dal.qty / 1000) * appState.priceChart.dal.price;
+                if(menu.soya) otherItemsCost += (appState.priceChart.soya.qty / 1000) * appState.priceChart.soya.price;
+                if(menu.oil) otherItemsCost += (appState.priceChart.oil.qty / 1000) * appState.priceChart.oil.price;
+                if(menu.egg) otherItemsCost += appState.priceChart.egg.qty * appState.priceChart.egg.price;
+                if(menu.laddoo) otherItemsCost += appState.priceChart.laddoo.qty * appState.priceChart.laddoo.price;
+                if(menu.fuelCost) otherItemsCost += appState.priceChart.fuel.qty * appState.priceChart.fuel.price;
+                
+                // Add salt/condiment cost (flat per-student cost)
+                otherItemsCost += appState.priceChart.salt.price || 0;
+                
+                // Veg cost is whatever is left
+                let vegPerStudent = appState.mealCost - otherItemsCost;
+                
+                // If it's Sunday and nothing is ticked, usually 0
+                const isAllFalse = Object.values(menu).every(v => !v);
+                if(isAllFalse) {
+                    otherItemsCost = 0;
+                    vegPerStudent = 0;
+                }
+
+                // Veg per kg = (Veg cost per student / quantity in g) * 1000
+                let vegPerKg = 0;
+                if(vegPerStudent > 0 && appState.priceChart.veg.qty > 0) {
+                     vegPerKg = (vegPerStudent / appState.priceChart.veg.qty) * 1000;
+                }
+
+                adjustments[day] = {
+                    otherCost: otherItemsCost.toFixed(3),
+                    vegStudent: isAllFalse ? "—" : vegPerStudent.toFixed(3),
+                    vegKg: isAllFalse ? "—" : vegPerKg.toFixed(3)
+                };
+            });
+            return adjustments;
+        }
+
+        // --- UI Rendering Functions ---
+
+        // Tab Switching
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            document.body.dataset.tab = tabId;
+            document.getElementById(`nav-${tabId}`).classList.add('active');
+
+            // Re-render data for the active tab to ensure freshness
+            if(tabId === 'settings') renderSettings();
+            if(tabId === 'master-attendance') renderAttendance();
+            if(tabId === 'mdm-register') renderMDMRegisterInit();
+            if(tabId === 'rice-register') renderRiceRegister();
+            if(tabId === 'millet-laddoo') renderMilletLaddoo();
+            if(tabId === 'abstract-format') renderAbstract();
+
+            // Mobile specific: close sidebar on selection
+            document.body.classList.remove('sidebar-open');
+            const mainScroll = document.querySelector('main > .flex-1.overflow-y-auto');
+            if (mainScroll) mainScroll.scrollTop = 0;
+        }
+
+        // --- Settings Tab ---
+        function renderSettings() {
+            // Update Appearance
+            const themeSelect = document.getElementById('set-theme');
+            if(themeSelect) themeSelect.value = appState.theme;
+
+            // Update School Info
+            document.getElementById('display-meal-cost').innerText = parseFloat(appState.mealCost).toFixed(3);
+            document.getElementById('set-meal-cost').value = appState.mealCost;
+            document.getElementById('set-school-name').value = appState.schoolName;
+            document.getElementById('set-enrolment').value = appState.enrolment;
+            if (document.getElementById('set-roll-ix')) document.getElementById('set-roll-ix').value = appState.rollIx || 0;
+            if (document.getElementById('set-roll-x')) document.getElementById('set-roll-x').value = appState.rollX || 0;
+
+            // Update Price Chart inputs & rations
+            const pc = appState.priceChart;
+            document.getElementById('pc-rice-qty').value = pc.rice.qty;
+            
+            document.getElementById('pc-dal-qty').value = pc.dal.qty;
+            document.getElementById('pc-dal-price').value = pc.dal.price;
+            document.getElementById('pc-dal-ration').innerText = ((pc.dal.qty/1000)*pc.dal.price).toFixed(3);
+            
+            document.getElementById('pc-soya-qty').value = pc.soya.qty;
+            document.getElementById('pc-soya-price').value = pc.soya.price;
+            document.getElementById('pc-soya-ration').innerText = ((pc.soya.qty/1000)*pc.soya.price).toFixed(3);
+            
+            document.getElementById('pc-oil-qty').value = pc.oil.qty;
+            document.getElementById('pc-oil-price').value = pc.oil.price;
+            document.getElementById('pc-oil-ration').innerText = ((pc.oil.qty/1000)*pc.oil.price).toFixed(3);
+            
+            document.getElementById('pc-veg-qty').value = pc.veg.qty;
+            
+            document.getElementById('pc-egg-qty').value = pc.egg.qty;
+            document.getElementById('pc-egg-price').value = pc.egg.price;
+            document.getElementById('pc-egg-ration').innerText = (pc.egg.qty*pc.egg.price).toFixed(3);
+            
+            document.getElementById('pc-laddoo-qty').value = pc.laddoo.qty;
+            document.getElementById('pc-laddoo-price').value = pc.laddoo.price;
+            
+            document.getElementById('pc-fuel-qty').value = pc.fuel.qty;
+            document.getElementById('pc-fuel-price').value = pc.fuel.price;
+            
+            document.getElementById('pc-salt-price').value = pc.salt.price;
+
+            renderWeeklyMenu();
+            renderVegAdjustments();
+        }
+
+        function renderWeeklyMenu() {
+            const tbody = document.getElementById('weekly-menu-body');
+            let html = '';
+            daysOfWeek.forEach(day => {
+                const isSunday = day === 'Sunday';
+                html += `<tr>
+                    <td class="text-left font-medium text-white">${day}</td>`;
+                
+                menuItems.forEach(item => {
+                    const checked = appState.weeklyMenu[day][item] ? 'checked' : '';
+                    html += `<td>
+                        <div class="flex justify-center">
+                            <input type="checkbox" onchange="updateMenu('${day}', '${item}', this.checked)" ${checked}>
+                        </div>
+                    </td>`;
+                });
+                html += `</tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function updateMenu(day, item, isChecked) {
+            appState.weeklyMenu[day][item] = isChecked;
+            saveState();
+            renderVegAdjustments(); // Recalculate veg when menu changes
+        }
+
+        function renderVegAdjustments() {
+            const tbody = document.getElementById('veg-adjust-body');
+            const adjustments = calculateVegAdjustments();
+            let html = '';
+            daysOfWeek.forEach(day => {
+                const adj = adjustments[day];
+                html += `<tr>
+                    <td class="text-left font-medium text-white">${day}</td>
+                    <td>${adj.otherCost}</td>
+                    <td>${adj.vegStudent}</td>
+                    <td>${adj.vegKg}</td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        window.saveSchoolName = function() {
+            appState.schoolName = document.getElementById('set-school-name').value;
+            saveState();
+            const absName = document.getElementById('abs-school-name');
+            if (absName) absName.innerText = appState.schoolName.toUpperCase();
+        };
+
+        function saveMealCost() {
+            appState.mealCost = parseFloat(document.getElementById('set-meal-cost').value) || 0;
+            appState.schoolName = document.getElementById('set-school-name').value;
+            appState.enrolment = parseInt(document.getElementById('set-enrolment').value) || 0;
+            saveState();
+            renderSettings();
+            // Show feedback (could be a toast, keeping simple here)
+            const btn = document.querySelector('button[onclick="saveMealCost()"]');
+            const originalText = btn.innerText;
+            btn.innerText = "Saved!";
+            btn.classList.replace('bg-[#f59e0b]', 'bg-green-500');
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.classList.replace('bg-green-500', 'bg-[#f59e0b]');
+            }, 1000);
+        }
+
+        function savePriceChart() {
+            appState.priceChart.rice.qty = parseFloat(document.getElementById('pc-rice-qty').value) || 0;
+            
+            appState.priceChart.dal.qty = parseFloat(document.getElementById('pc-dal-qty').value) || 0;
+            appState.priceChart.dal.price = parseFloat(document.getElementById('pc-dal-price').value) || 0;
+            
+            appState.priceChart.soya.qty = parseFloat(document.getElementById('pc-soya-qty').value) || 0;
+            appState.priceChart.soya.price = parseFloat(document.getElementById('pc-soya-price').value) || 0;
+            
+            appState.priceChart.oil.qty = parseFloat(document.getElementById('pc-oil-qty').value) || 0;
+            appState.priceChart.oil.price = parseFloat(document.getElementById('pc-oil-price').value) || 0;
+            
+            appState.priceChart.veg.qty = parseFloat(document.getElementById('pc-veg-qty').value) || 0;
+            
+            appState.priceChart.egg.qty = parseFloat(document.getElementById('pc-egg-qty').value) || 0;
+            appState.priceChart.egg.price = parseFloat(document.getElementById('pc-egg-price').value) || 0;
+            
+            appState.priceChart.laddoo.qty = parseFloat(document.getElementById('pc-laddoo-qty').value) || 0;
+            appState.priceChart.laddoo.price = parseFloat(document.getElementById('pc-laddoo-price').value) || 0;
+            
+            appState.priceChart.fuel.qty = parseFloat(document.getElementById('pc-fuel-qty').value) || 0;
+            appState.priceChart.fuel.price = parseFloat(document.getElementById('pc-fuel-price').value) || 0;
+            
+            appState.priceChart.salt.price = parseFloat(document.getElementById('pc-salt-price').value) || 0;
+
+            saveState();
+            renderSettings(); // Re-render to update dependent Ration fields and Veg Adjust
+        }
+
+        // --- Master Attendance Tab ---
+        function formatDateDDMMYYYY(dateStr) {
+            if(!dateStr) return '';
+            const [y, m, d] = dateStr.split('-');
+            return `${d}-${m}-${y}`;
+        }
+
+        function getSplitRatio() {
+            const sel = document.getElementById('att-split-ratio');
+            const val = sel ? sel.value : (appState.attSplitRatio || 'proportional');
+            if (val === 'proportional') {
+                const rIx = parseInt(appState.rollIx) || 0;
+                const rX = parseInt(appState.rollX) || 0;
+                const rTot = rIx + rX;
+                return rTot > 0 ? (rIx / rTot) : 0.5;
+            }
+            return parseFloat(val) || 0.5;
+        }
+
+        function onRollStrengthChange(source) {
+            let rIx = 0, rX = 0;
+            if (source === 'set') {
+                rIx = Math.max(0, parseInt(document.getElementById('set-roll-ix')?.value) || 0);
+                rX = Math.max(0, parseInt(document.getElementById('set-roll-x')?.value) || 0);
+            } else {
+                rIx = Math.max(0, parseInt(document.getElementById('att-roll-ix')?.value) || 0);
+                rX = Math.max(0, parseInt(document.getElementById('att-roll-x')?.value) || 0);
+            }
+            appState.rollIx = rIx;
+            appState.rollX = rX;
+            appState.enrolment = rIx + rX;
+            saveState();
+
+            syncRollStrengthUI();
+            updateAttendanceModeHint();
+        }
+
+        function syncRollStrengthUI() {
+            const rIx = parseInt(appState.rollIx) || 0;
+            const rX = parseInt(appState.rollX) || 0;
+            const rTot = rIx + rX;
+            const attIx = document.getElementById('att-roll-ix');
+            const attX = document.getElementById('att-roll-x');
+            const attTot = document.getElementById('att-roll-total');
+            const setIx = document.getElementById('set-roll-ix');
+            const setX = document.getElementById('set-roll-x');
+            const setEnr = document.getElementById('set-enrolment');
+
+            if (attIx && document.activeElement !== attIx) attIx.value = rIx || '';
+            if (attX && document.activeElement !== attX) attX.value = rX || '';
+            if (attTot) attTot.textContent = rTot;
+            if (setIx && document.activeElement !== setIx) setIx.value = rIx;
+            if (setX && document.activeElement !== setX) setX.value = rX;
+            if (setEnr) setEnr.value = rTot || appState.enrolment || 0;
+            applyRollHiddenState();
+        }
+
+        function toggleRollStrengthBox() {
+            appState.rollHidden = !appState.rollHidden;
+            saveState();
+            applyRollHiddenState();
+        }
+
+        function applyRollHiddenState() {
+            const fields = document.getElementById('att-roll-fields');
+            const btn = document.getElementById('att-roll-toggle-btn');
+            const rIx = parseInt(appState.rollIx) || 0;
+            const rX = parseInt(appState.rollX) || 0;
+            if (fields) {
+                fields.classList.toggle('hidden', !!appState.rollHidden);
+            }
+            if (btn) {
+                btn.textContent = appState.rollHidden ? `👁 Show Roll (${rIx}/${rX})` : '👁 Hide Roll';
+            }
+        }
+
+        function saveAttendancePrefs() {
+            const modeSel = document.getElementById('att-entry-mode');
+            const ratioSel = document.getElementById('att-split-ratio');
+            if (modeSel) appState.attEntryMode = modeSel.value;
+            if (ratioSel) appState.attSplitRatio = ratioSel.value;
+            saveState();
+            updateAttendanceModeHint();
+        }
+
+        function updateAttendanceModeHint() {
+            const mode = appState.attEntryMode || 'both';
+            const ratioVal = document.getElementById('att-split-ratio')?.value || appState.attSplitRatio || 'proportional';
+            const hint = document.getElementById('att-mode-hint');
+            if (!hint) return;
+            const rIx = parseInt(appState.rollIx) || 0;
+            const rX = parseInt(appState.rollX) || 0;
+            const rTot = rIx + rX;
+            let splitDesc = '50% / 50%';
+            if (ratioVal === 'proportional') {
+                if (rTot > 0) {
+                    const pctIx = ((rIx / rTot) * 100).toFixed(1);
+                    const pctX = ((rX / rTot) * 100).toFixed(1);
+                    splitDesc = `Proportional (${rIx}:${rX} → ${pctIx}% IX / ${pctX}% X)`;
+                } else {
+                    splitDesc = 'Proportional (enter Roll IX & X above, currently 50/50)';
+                }
+            } else {
+                const p = Math.round((parseFloat(ratioVal) || 0.5) * 100);
+                splitDesc = `${p}% IX / ${100 - p}% X`;
+            }
+
+            if (mode === 'both') {
+                hint.innerHTML = `💡 <b>Both-Way Active:</b> Enter <b>Class IX &amp; X</b> to auto-sum Total, OR enter <b>Total Attendance</b> to auto-split [${splitDesc}].`;
+            } else if (mode === 'total') {
+                hint.innerHTML = `∑ <b>Total Entry Mode:</b> Enter <b>Total Attendance</b> directly; Class IX &amp; X auto-split [${splitDesc}].`;
+            } else {
+                hint.innerHTML = '✎ <b>Class-wise Mode:</b> Enter <b>Class IX &amp; Class X</b> separately; Total Attendance auto-calculates.';
+            }
+        }
+
+        function updateAttendanceEntryMode() {
+            saveAttendancePrefs();
+            const mode = appState.attEntryMode || 'both';
+            const splitWrap = document.getElementById('att-split-wrap');
+            if (splitWrap) {
+                splitWrap.style.display = (mode === 'class') ? 'none' : '';
+            }
+            updateAttendanceModeHint();
+            applyEntryModeToRows();
+        }
+
+        function applyEntryModeToRows() {
+            const mode = appState.attEntryMode || 'both';
+            const rows = document.querySelectorAll('#attendance-list tr');
+            rows.forEach(row => {
+                const isHoliday = row.querySelector('.holiday-check')?.checked;
+                const ixInput = row.querySelector('.att-ix');
+                const xInput = row.querySelector('.att-x');
+                const totalInput = row.querySelector('.att-total');
+                if (!ixInput || !xInput || !totalInput) return;
+
+                if (isHoliday) {
+                    ixInput.disabled = true;
+                    xInput.disabled = true;
+                    totalInput.disabled = true;
+                    return;
+                }
+
+                if (mode === 'both') {
+                    ixInput.disabled = false;
+                    xInput.disabled = false;
+                    totalInput.disabled = false;
+                    ixInput.classList.remove('pointer-events-none', 'opacity-60');
+                    xInput.classList.remove('pointer-events-none', 'opacity-60');
+                    totalInput.classList.remove('pointer-events-none', 'opacity-60');
+                } else if (mode === 'total') {
+                    ixInput.disabled = true;
+                    xInput.disabled = true;
+                    totalInput.disabled = false;
+                    ixInput.classList.add('pointer-events-none', 'opacity-60');
+                    xInput.classList.add('pointer-events-none', 'opacity-60');
+                    totalInput.classList.remove('pointer-events-none', 'opacity-60');
+                } else {
+                    ixInput.disabled = false;
+                    xInput.disabled = false;
+                    totalInput.disabled = true;
+                    ixInput.classList.remove('pointer-events-none', 'opacity-60');
+                    xInput.classList.remove('pointer-events-none', 'opacity-60');
+                    totalInput.classList.add('pointer-events-none', 'opacity-60');
+                }
+            });
+        }
+
+        function calculateDailyTotal(input) {
+            const row = input.closest('tr');
+            const ixRaw = row.querySelector('.att-ix').value;
+            const xRaw = row.querySelector('.att-x').value;
+            const totalInput = row.querySelector('.att-total');
+            if (ixRaw === '' && xRaw === '') {
+                totalInput.value = '';
+            } else {
+                const ix = parseInt(ixRaw) || 0;
+                const x = parseInt(xRaw) || 0;
+                totalInput.value = ix + x;
+            }
+            updateAttendanceFooter();
+            autoSaveAttendanceRow(row);
+        }
+
+        function splitTotalToClasses(input) {
+            const row = input.closest('tr');
+            const raw = input.value;
+            const ixInput = row.querySelector('.att-ix');
+            const xInput = row.querySelector('.att-x');
+            if (raw === '') {
+                ixInput.value = '';
+                xInput.value = '';
+            } else {
+                const total = Math.max(0, parseInt(raw) || 0);
+                const ratio = getSplitRatio();
+                const ix = ratio === 0.5 ? Math.ceil(total / 2) : Math.round(total * ratio);
+                const x = Math.max(0, total - ix);
+                ixInput.value = ix;
+                xInput.value = x;
+            }
+            updateAttendanceFooter();
+            autoSaveAttendanceRow(row);
+        }
+
+        function escHtml(s) {
+            return String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        function getHolidayDisplayName(attRecord, dayName) {
+            if (attRecord && attRecord.holidayName && attRecord.holidayName.trim()) {
+                return attRecord.holidayName.trim();
+            }
+            return dayName === 'Sunday' ? 'Sunday' : 'Holiday';
+        }
+
+        function autoSaveAttendanceRow(row) {
+            if (!row) return;
+            const date = row.getAttribute('data-date');
+            const isHoliday = row.querySelector('.holiday-check').checked;
+            const holidayNameInput = row.querySelector('.holiday-name');
+            const holidayName = isHoliday && holidayNameInput ? holidayNameInput.value.trim() : '';
+            const ixEl = row.querySelector('.att-ix');
+            const xEl = row.querySelector('.att-x');
+            const ixVal = ixEl ? ixEl.value : '';
+            const xVal = xEl ? xEl.value : '';
+            const finalIx = isHoliday ? 0 : (parseInt(ixVal) || 0);
+            const finalX = isHoliday ? 0 : (parseInt(xVal) || 0);
+            const total = isHoliday ? 0 : (finalIx + finalX);
+
+            const existingIndex = appState.attendance.findIndex(a => a.date === date);
+            if (existingIndex >= 0) {
+                appState.attendance[existingIndex].ix = (isHoliday || ixVal === '') ? '' : finalIx;
+                appState.attendance[existingIndex].x = (isHoliday || xVal === '') ? '' : finalX;
+                appState.attendance[existingIndex].present = total;
+                appState.attendance[existingIndex].isHoliday = isHoliday;
+                appState.attendance[existingIndex].holidayName = holidayName;
+            } else {
+                appState.attendance.push({
+                    id: Date.now() + Math.random(),
+                    date,
+                    ix: (isHoliday || ixVal === '') ? '' : finalIx,
+                    x: (isHoliday || xVal === '') ? '' : finalX,
+                    present: total,
+                    isHoliday: isHoliday,
+                    holidayName: holidayName
+                });
+            }
+            saveState();
+        }
+
+        function updateAttendanceFooter() {
+            const footer = document.getElementById('attendance-footer');
+            if (!footer) return;
+            const rows = document.querySelectorAll('#attendance-list tr');
+            let sumIx = 0, sumX = 0, sumTotal = 0, openDays = 0;
+            rows.forEach(row => {
+                const isHoliday = row.querySelector('.holiday-check')?.checked;
+                if (!isHoliday) {
+                    const ix = parseInt(row.querySelector('.att-ix')?.value) || 0;
+                    const x = parseInt(row.querySelector('.att-x')?.value) || 0;
+                    const tot = parseInt(row.querySelector('.att-total')?.value) || (ix + x);
+                    if (tot > 0) openDays++;
+                    sumIx += ix;
+                    sumX += x;
+                    sumTotal += tot;
+                }
+            });
+            footer.innerHTML = `<tr>
+                <td colspan="3" class="text-right font-bold text-gray-300">Monthly Total (${openDays} active days):</td>
+                <td class="font-bold text-white">${sumIx}</td>
+                <td class="font-bold text-white">${sumX}</td>
+                <td class="font-bold text-accent text-lg">${sumTotal}</td>
+            </tr>`;
+        }
+
+        function clearMonthAttendance() {
+            const monthInput = document.getElementById('att-month-select');
+            const ym = monthInput ? monthInput.value : '';
+            if (!ym) return;
+            if (!confirm(`Clear all attendance entries for ${ym}?`)) return;
+
+            appState.attendance = appState.attendance.filter(a => !a.date.startsWith(ym + '-'));
+            saveState();
+            renderAttendance();
+        }
+
+        function renderAttendance() {
+            const monthInput = document.getElementById('att-month-select');
+            if(!monthInput.value) {
+                const now = new Date();
+                monthInput.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2, '0')}`;
+            }
+
+            const modeSel = document.getElementById('att-entry-mode');
+            const ratioSel = document.getElementById('att-split-ratio');
+            if (modeSel && appState.attEntryMode) modeSel.value = appState.attEntryMode;
+            if (ratioSel) ratioSel.value = appState.attSplitRatio ? String(appState.attSplitRatio) : 'proportional';
+            syncRollStrengthUI();
+
+            const [year, month] = monthInput.value.split('-');
+            
+            const daysInMonth = new Date(year, month, 0).getDate();
+            const tbody = document.getElementById('attendance-list');
+            let html = '';
+
+            for(let i=1; i<=daysInMonth; i++) {
+                const dateStr = `${year}-${month}-${String(i).padStart(2, '0')}`;
+                const dayName = getDayName(dateStr);
+                
+                const existing = appState.attendance.find(a => a.date === dateStr);
+                const isSunday = dayName === 'Sunday';
+                
+                let isHoliday = false;
+                if (existing && existing.isHoliday !== undefined) {
+                    isHoliday = existing.isHoliday;
+                } else if (isSunday) {
+                    isHoliday = true; // Auto-check Sunday by default
+                }
+                
+                const existingIx = existing && existing.ix !== undefined && existing.ix !== '' ? existing.ix : '';
+                const existingX = existing && existing.x !== undefined && existing.x !== '' ? existing.x : '';
+                const existingPresent = existing && existing.present > 0 ? existing.present : '';
+                const existingHolidayName = existing && existing.holidayName !== undefined ? existing.holidayName : (isSunday && isHoliday ? 'Sunday' : '');
+
+                const rowClass = isHoliday ? 'holiday-row' : 'hover:bg-[#2a2d30] transition-colors';
+
+                if (isHoliday) {
+                    html += `<tr class="${rowClass}" data-date="${dateStr}">
+                        <td class="font-medium whitespace-nowrap">${formatDateDDMMYYYY(dateStr)}</td>
+                        <td class="font-bold">${dayName}</td>
+                        <td>
+                            <label class="flex items-center justify-center gap-2 cursor-pointer text-xs font-bold">
+                                <input type="checkbox" class="holiday-check" onchange="toggleHoliday(this)" checked>
+                                Holiday
+                            </label>
+                        </td>
+                        <td colspan="3" class="holiday-banner-td">
+                            <input type="text" class="holiday-name holiday-banner-box" placeholder="Enter holiday name (e.g. GOVT. DECLARED HOLIDAY)" value="${escHtml(existingHolidayName)}" oninput="autoSaveAttendanceRow(this.closest('tr'))" />
+                        </td>
+                    </tr>`;
+                } else {
+                    html += `<tr class="${rowClass}" data-date="${dateStr}">
+                        <td class="font-medium whitespace-nowrap">${formatDateDDMMYYYY(dateStr)}</td>
+                        <td class="text-gray-400">${dayName}</td>
+                        <td>
+                            <label class="flex items-center justify-center gap-2 cursor-pointer text-xs text-gray-300">
+                                <input type="checkbox" class="holiday-check" onchange="toggleHoliday(this)">
+                                Holiday
+                            </label>
+                        </td>
+                        <td><input type="number" min="0" placeholder="IX" class="poshan-input att-ix w-20" value="${existingIx}" oninput="calculateDailyTotal(this)"></td>
+                        <td><input type="number" min="0" placeholder="X" class="poshan-input att-x w-20" value="${existingX}" oninput="calculateDailyTotal(this)"></td>
+                        <td><input type="number" min="0" placeholder="Total" class="poshan-input att-total w-24 font-bold text-accent text-base" value="${existingPresent}" oninput="splitTotalToClasses(this)"></td>
+                    </tr>`;
+                }
+            }
+            tbody.innerHTML = html;
+            updateAttendanceEntryMode();
+            updateAttendanceFooter();
+        }
+
+        function toggleHoliday(checkbox) {
+            const row = checkbox.closest('tr');
+            const dateStr = row.getAttribute('data-date');
+            const isHoliday = checkbox.checked;
+            const existingIndex = appState.attendance.findIndex(a => a.date === dateStr);
+            const defaultName = (isHoliday && getDayName(dateStr) === 'Sunday') ? 'Sunday' : '';
+
+            if (existingIndex >= 0) {
+                appState.attendance[existingIndex].isHoliday = isHoliday;
+                if (isHoliday) {
+                    appState.attendance[existingIndex].ix = '';
+                    appState.attendance[existingIndex].x = '';
+                    appState.attendance[existingIndex].present = 0;
+                    if (!appState.attendance[existingIndex].holidayName) {
+                        appState.attendance[existingIndex].holidayName = defaultName;
+                    }
+                } else {
+                    appState.attendance[existingIndex].holidayName = '';
+                }
+            } else {
+                appState.attendance.push({
+                    id: Date.now() + Math.random(),
+                    date: dateStr,
+                    ix: '',
+                    x: '',
+                    present: 0,
+                    isHoliday: isHoliday,
+                    holidayName: defaultName
+                });
+            }
+            saveState();
+            renderAttendance();
+
+            if (isHoliday) {
+                const newRow = document.querySelector(`#attendance-list tr[data-date="${dateStr}"]`);
+                const input = newRow?.querySelector('.holiday-name');
+                if (input) input.focus();
+            }
+        }
+
+        // --- MDM Register Tab ---
+        function renderMDMRegisterInit() {
+            // Populate month filter based on attendance data
+            const select = document.getElementById('mdm-month-filter');
+            const months = new Set();
+            appState.attendance.forEach(r => {
+                const d = new Date(r.date);
+                months.add(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, '0')}`);
+            });
+            
+            let options = '<option value="all">All Months</option>';
+            Array.from(months).sort().reverse().forEach(m => {
+                const [year, month] = m.split('-');
+                const monthName = new Date(year, month-1, 1).toLocaleString('default', { month: 'long', year: 'numeric' });
+                options += `<option value="${m}">${monthName}</option>`;
+            });
+            select.innerHTML = options;
+            
+            // Set to current month if exists, else first available, else all
+            const currentMonthStr = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2, '0')}`;
+            if(months.has(currentMonthStr)) select.value = currentMonthStr;
+
+            renderMDMRegister();
+        }
+
+        function renderMDMRegister() {
+            const tbody = document.getElementById('mdm-register-list');
+            const tfoot = document.getElementById('mdm-register-footer');
+            const filterValue = document.getElementById('mdm-month-filter').value;
+            
+            let records = appState.attendance;
+            if(filterValue !== 'all') {
+                records = records.filter(r => r.date.startsWith(filterValue));
+            }
+            // Sort ascending for register view
+            records = [...records].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            const vegAdjustments = calculateVegAdjustments();
+            const pc = appState.priceChart;
+
+            let html = '';
+            let totals = { ix:0, x:0, present:0, riceKg:0, dalKg:0, dalRs:0, soyaKg:0, soyaRs:0, oilL:0, oilRs:0, vegKg:0, vegRs:0, eggPc:0, eggRs:0, ladPc:0, ladRs:0, fuelQty:0, fuelRs:0, grandTotal:0 };
+
+            records.forEach(r => {
+                const dayName = getDayName(r.date);
+                const menu = appState.weeklyMenu[dayName];
+                const p = r.present;
+                const ix = parseInt(r.ix) || 0;
+                const xCount = parseInt(r.x) || 0;
+                
+                // Helper to calc based on menu flag
+                const calc = (isMenu, perStud, unitDivisor, price) => {
+                    if(!isMenu || p===0) return {qty:0, rs:0};
+                    const totalQty = (p * perStud) / unitDivisor;
+                    const totalRs = totalQty * price;
+                    return {qty: totalQty, rs: totalRs};
+                };
+
+                const rice = calc(menu.rice, pc.rice.qty, 1000, 0); // Rice is free
+                const dal = calc(menu.dal, pc.dal.qty, 1000, pc.dal.price);
+                const soya = calc(menu.soya, pc.soya.qty, 1000, pc.soya.price);
+                const oil = calc(menu.oil, pc.oil.qty, 1000, pc.oil.price); // ml to L
+                
+                // Veg logic is dynamic
+                let veg = {qty:0, rs:0};
+                if(menu.vegetable && p > 0) {
+                    const vegAdj = vegAdjustments[dayName];
+                    if(vegAdj.vegStudent !== "—") {
+                        veg.rs = p * parseFloat(vegAdj.vegStudent);
+                        veg.qty = (p * pc.veg.qty) / 1000;
+                    }
+                }
+
+                const egg = calc(menu.egg, pc.egg.qty, 1, pc.egg.price);
+                const lad = calc(menu.laddoo, pc.laddoo.qty, 1, pc.laddoo.price);
+                const fuel = calc(menu.fuelCost, pc.fuel.qty, 1, pc.fuel.price);
+
+                const dayTotal = dal.rs + soya.rs + oil.rs + veg.rs + egg.rs + lad.rs + fuel.rs;
+
+                // Add to totals
+                totals.ix += ix; totals.x += xCount; totals.present += p; totals.riceKg += rice.qty;
+                totals.dalKg += dal.qty; totals.dalRs += dal.rs;
+                totals.soyaKg += soya.qty; totals.soyaRs += soya.rs;
+                totals.oilL += oil.qty; totals.oilRs += oil.rs;
+                totals.vegKg += veg.qty; totals.vegRs += veg.rs;
+                totals.eggPc += egg.qty; totals.eggRs += egg.rs;
+                totals.ladPc += lad.qty; totals.ladRs += lad.rs;
+                totals.fuelQty += fuel.qty; totals.fuelRs += fuel.rs;
+                totals.grandTotal += dayTotal;
+
+                const isHoliday = !!r.isHoliday;
+                const holidayLabel = isHoliday ? escHtml(getHolidayDisplayName(r, dayName)) : '-';
+
+                if (isHoliday) {
+                    html += `<tr class="holiday-row">
+                        <td class="whitespace-nowrap">${formatDateDDMMYYYY(r.date)} <span class="text-xs block">${dayName.substring(0,3)}</span></td>
+                        <td colspan="12" class="holiday-banner-td"><div class="holiday-banner-box">${holidayLabel}</div></td>
+                    </tr>`;
+                } else {
+                    html += `<tr>
+                        <td class="whitespace-nowrap">${formatDateDDMMYYYY(r.date)} <span class="text-xs text-gray-500 block">${dayName.substring(0,3)}</span></td>
+                        <td>${ix > 0 ? ix : '-'}</td>
+                        <td>${xCount > 0 ? xCount : '-'}</td>
+                        <td class="font-bold">${p}</td>
+                        <td>${rice.qty > 0 ? rice.qty.toFixed(3) : '-'}</td>
+                        <td>${veg.qty > 0 ? veg.qty.toFixed(3) : '-'}</td>
+                        <td>${oil.qty > 0 ? oil.qty.toFixed(3) : '-'}</td>
+                        <td>${fuel.qty > 0 ? fuel.qty : '-'}</td>
+                        <td>${egg.qty > 0 ? egg.qty : '-'}</td>
+                        <td>${soya.qty > 0 ? soya.qty.toFixed(3) : '-'}</td>
+                        <td>${dal.qty > 0 ? dal.qty.toFixed(3) : '-'}</td>
+                        <td>${lad.qty > 0 ? lad.qty : '-'}</td>
+                        <td class="text-xs text-gray-500">-</td>
+                    </tr>`;
+                }
+            });
+
+            if(records.length === 0) {
+                html = `<tr><td colspan="13" class="py-8 text-gray-500">No data for selected period.</td></tr>`;
+                tfoot.innerHTML = '';
+            } else {
+                tfoot.innerHTML = `<tr>
+                    <td class="text-right">Total:</td>
+                    <td>${totals.ix}</td>
+                    <td>${totals.x}</td>
+                    <td>${totals.present}</td>
+                    <td class="text-accent">${totals.riceKg.toFixed(3)}</td>
+                    <td class="text-accent">${totals.vegKg.toFixed(3)}</td>
+                    <td class="text-accent">${totals.oilL.toFixed(3)}</td>
+                    <td class="text-accent">${totals.fuelQty}</td>
+                    <td class="text-accent">${totals.eggPc}</td>
+                    <td class="text-accent">${totals.soyaKg.toFixed(3)}</td>
+                    <td class="text-accent">${totals.dalKg.toFixed(3)}</td>
+                    <td class="text-accent">${totals.ladPc}</td>
+                    <td></td>
+                </tr>`;
+            }
+            tbody.innerHTML = html;
+        }
+
+        // --- Rice Register Tab ---
+        window.renderRiceRegister = function() {
+            const monthInput = document.getElementById('rice-month-select');
+            if(!monthInput.value) {
+                const now = new Date();
+                monthInput.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2, '0')}`;
+            }
+            const monthVal = monthInput.value;
+            const [year, month] = monthVal.split('-');
+            
+            // Set opening balance input
+            const currentOpBal = appState.riceOpeningBalances[monthVal] || 0;
+            document.getElementById('rice-opening-balance').value = currentOpBal;
+
+            const daysInMonth = new Date(year, month, 0).getDate();
+            const tbody = document.getElementById('rice-register-list');
+            
+            let html = '';
+            let currentBalance = parseFloat(currentOpBal);
+            
+            for(let i=1; i<=daysInMonth; i++) {
+                const dateStr = `${year}-${month}-${String(i).padStart(2, '0')}`;
+                const dayName = getDayName(dateStr);
+                const attRecord = appState.attendance.find(a => a.date === dateStr);
+                
+                let isHoliday = false;
+                if (attRecord && attRecord.isHoliday !== undefined) {
+                    isHoliday = attRecord.isHoliday;
+                } else if (dayName === 'Sunday') {
+                    isHoliday = true; 
+                }
+
+                const presentIX = (attRecord && !isHoliday) ? (parseInt(attRecord.ix) || 0) : 0;
+                const presentX = (attRecord && !isHoliday) ? (parseInt(attRecord.x) || 0) : 0;
+                const totalPresent = presentIX + presentX;
+                
+                // Consumption
+                let consumed = 0;
+                if(!isHoliday && appState.weeklyMenu[dayName].rice) {
+                    consumed = (totalPresent * appState.priceChart.rice.qty) / 1000;
+                }
+                
+                // Received
+                const received = parseFloat(appState.riceReceived[dateStr]) || 0;
+                
+                // Start of day balance
+                const startBalance = currentBalance;
+                
+                // End of day balance
+                currentBalance = currentBalance + received - consumed;
+                
+                const rowClass = isHoliday ? 'holiday-row' : 'hover:bg-[#2a2d30] transition-colors';
+                const riceHolidayText = isHoliday ? escHtml(getHolidayDisplayName(attRecord, dayName)) : '';
+
+                html += `<tr class="${rowClass}">
+                    <td class="font-medium whitespace-nowrap">${formatDateDDMMYYYY(dateStr)}</td>
+                    <td class="${isHoliday ? 'font-bold' : 'text-gray-400'}">${dayName.substring(0,3)}</td>
+                    ${isHoliday
+                        ? `<td colspan="2" class="holiday-banner-td"><div class="holiday-banner-box">${riceHolidayText}</div></td>`
+                        : `<td>${presentIX || '-'}</td><td>${presentX || '-'}</td>`
+                    }
+                    <td class="font-bold">${startBalance.toFixed(3)}</td>
+                    <td>
+                        <input type="number" min="0" step="0.01" class="poshan-input w-24 mx-auto" 
+                            value="${received || ''}" 
+                            onchange="saveRiceReceived('${dateStr}', this.value)">
+                    </td>
+                    <td class="text-orange-400 font-bold">${consumed > 0 ? consumed.toFixed(3) : '-'}</td>
+                    <td class="text-accent font-bold">${currentBalance.toFixed(3)}</td>
+                </tr>`;
+            }
+
+            tbody.innerHTML = html;
+        }
+
+        window.saveRiceOpeningBalance = function() {
+            const monthVal = document.getElementById('rice-month-select').value;
+            if(!monthVal) return;
+            const val = parseFloat(document.getElementById('rice-opening-balance').value) || 0;
+            appState.riceOpeningBalances[monthVal] = val;
+            saveState();
+            renderRiceRegister();
+        }
+        
+        window.saveRiceReceived = function(dateStr, value) {
+            const val = parseFloat(value) || 0;
+            if(val > 0) {
+                appState.riceReceived[dateStr] = val;
+            } else {
+                delete appState.riceReceived[dateStr];
+            }
+            saveState();
+            renderRiceRegister();
+        }
+
+        // --- Millet Laddoo Register Tab ---
+        function renderMilletLaddoo() {
+            const monthInput = document.getElementById('laddoo-month-select');
+            if(!monthInput.value) {
+                const now = new Date();
+                monthInput.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2, '0')}`;
+            }
+            const monthVal = monthInput.value;
+            const [year, month] = monthVal.split('-');
+            
+            const daysInMonth = new Date(year, month, 0).getDate();
+            const tbody = document.getElementById('laddoo-register-list');
+            const tfoot = document.getElementById('laddoo-register-footer');
+            
+            let html = '';
+            let totals = {
+                laddoos: 0, ragi: 0, wheat: 0, sesame: 0, sugar: 0, oil: 0, groundnut: 0, cardamom: 0, prepCost: 0
+            };
+
+            for(let i=1; i<=daysInMonth; i++) {
+                const dateStr = `${year}-${month}-${String(i).padStart(2, '0')}`;
+                const dayName = getDayName(dateStr);
+                const attRecord = appState.attendance.find(a => a.date === dateStr);
+                
+                let isHoliday = false;
+                if (attRecord && attRecord.isHoliday !== undefined) {
+                    isHoliday = attRecord.isHoliday;
+                } else if (dayName === 'Sunday') {
+                    isHoliday = true; 
+                }
+
+                const present = (attRecord && !isHoliday) ? (parseInt(attRecord.present) || 0) : 0;
+                
+                let laddoosServed = 0;
+                if(!isHoliday && appState.weeklyMenu[dayName].laddoo) {
+                    laddoosServed = present * appState.priceChart.laddoo.qty; // Quantity set per student
+                }
+
+                // Constants in grams per laddoo
+                const ragi = (laddoosServed * 12) / 1000;
+                const wheat = (laddoosServed * 12) / 1000;
+                const sesame = (laddoosServed * 1) / 1000;
+                const sugar = (laddoosServed * 6) / 1000;
+                const oil = (laddoosServed * 2) / 1000;
+                const groundnut = (laddoosServed * 1) / 1000;
+                const cardamom = (laddoosServed * 0.04) / 1000;
+                const prep = laddoosServed * 0.26;
+
+                totals.laddoos += laddoosServed;
+                totals.ragi += ragi;
+                totals.wheat += wheat;
+                totals.sesame += sesame;
+                totals.sugar += sugar;
+                totals.oil += oil;
+                totals.groundnut += groundnut;
+                totals.cardamom += cardamom;
+                totals.prepCost += prep;
+
+                const rowClass = isHoliday ? 'holiday-row' : 'hover:bg-[#2a2d30] transition-colors';
+                const laddooHolidayText = isHoliday ? escHtml(getHolidayDisplayName(attRecord, dayName)) : '';
+
+                if (isHoliday) {
+                    html += `<tr class="${rowClass}">
+                        <td class="font-medium whitespace-nowrap">${formatDateDDMMYYYY(dateStr)}</td>
+                        <td class="font-bold">${dayName.substring(0,3)}</td>
+                        <td colspan="9" class="holiday-banner-td"><div class="holiday-banner-box">${laddooHolidayText}</div></td>
+                    </tr>`;
+                } else {
+                    html += `<tr class="${rowClass}">
+                        <td class="font-medium whitespace-nowrap">${formatDateDDMMYYYY(dateStr)}</td>
+                        <td class="text-gray-400">${dayName.substring(0,3)}</td>
+                        <td class="font-bold text-white">${laddoosServed > 0 ? laddoosServed : '-'}</td>
+                        <td>${ragi > 0 ? ragi.toFixed(3) : '-'}</td>
+                        <td>${wheat > 0 ? wheat.toFixed(3) : '-'}</td>
+                        <td>${sesame > 0 ? sesame.toFixed(3) : '-'}</td>
+                        <td>${sugar > 0 ? sugar.toFixed(3) : '-'}</td>
+                        <td>${oil > 0 ? oil.toFixed(3) : '-'}</td>
+                        <td>${groundnut > 0 ? groundnut.toFixed(3) : '-'}</td>
+                        <td>${cardamom > 0 ? cardamom.toFixed(3) : '-'}</td>
+                        <td class="text-right">${prep > 0 ? prep.toFixed(3) : '-'}</td>
+                    </tr>`;
+                }
+            }
+
+            tbody.innerHTML = html;
+            
+            tfoot.innerHTML = `<tr>
+                <td colspan="2" class="text-right uppercase text-sm">Total:</td>
+                <td class="text-accent text-base">${totals.laddoos}</td>
+                <td class="text-accent text-sm">${totals.ragi.toFixed(3)}</td>
+                <td class="text-accent text-sm">${totals.wheat.toFixed(3)}</td>
+                <td class="text-accent text-sm">${totals.sesame.toFixed(3)}</td>
+                <td class="text-accent text-sm">${totals.sugar.toFixed(3)}</td>
+                <td class="text-accent text-sm">${totals.oil.toFixed(3)}</td>
+                <td class="text-accent text-sm">${totals.groundnut.toFixed(3)}</td>
+                <td class="text-accent text-sm">${totals.cardamom.toFixed(3)}</td>
+                <td class="text-accent text-right text-base">${totals.prepCost.toFixed(3)}</td>
+            </tr>`;
+        }
+
+        // --- Abstract Format Tab ---
+        function renderAbstract() {
+            const monthInput = document.getElementById('abs-month-select');
+            if(!monthInput.value) {
+                const now = new Date();
+                monthInput.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2, '0')}`;
+            }
+            const monthVal = monthInput.value;
+            const [yearStr, monthStr] = monthVal.split('-');
+            const displayMonth = new Date(yearStr, monthStr - 1, 1).toLocaleString('default', { month: 'long', year: 'numeric' });
+            
+            // Set Headers
+            document.getElementById('abs-school-name').innerText = appState.schoolName.toUpperCase();
+            document.getElementById('abs-subtitle').innerText = `${displayMonth} · Abstract consumption · Item-wise monthly`;
+            document.getElementById('egg-subtitle').innerText = `${displayMonth} · Date, day and number of eggs · ₹${appState.priceChart.egg.price.toFixed(2)} per egg`;
+
+            const vegAdjustments = calculateVegAdjustments();
+            const pc = appState.priceChart;
+            
+            let totalMeals = 0;
+            let mealDays = 0;
+            
+            let itemTotals = {
+                rice: { qty: 0 },
+                dal: { qty: 0, price: pc.dal.price },
+                soya: { qty: 0, price: pc.soya.price },
+                oil: { qty: 0, price: pc.oil.price }, // in Litres/kg
+                veg: { qty: 0, amount: 0 }, 
+                egg: { qty: 0, price: pc.egg.price },
+                laddoo: { qty: 0, price: pc.laddoo.price },
+                fuel: { qty: 0, price: pc.fuel.price },
+                salt: { amount: 0 } 
+            };
+
+            let eggDailyData = [];
+            let riceReceivedTotal = 0;
+
+            appState.attendance.forEach(r => {
+                if(!r.date.startsWith(monthVal)) return;
+                
+                // Track rice received for this specific month
+                if(appState.riceReceived[r.date]) {
+                    riceReceivedTotal += parseFloat(appState.riceReceived[r.date]);
+                }
+
+                if(r.isHoliday) return; 
+                
+                const p = parseInt(r.present) || 0;
+                if(p === 0) return;
+                
+                totalMeals += p;
+                mealDays++;
+                
+                const dayName = getDayName(r.date);
+                const menu = appState.weeklyMenu[dayName];
+                
+                if(menu.rice) itemTotals.rice.qty += (p * pc.rice.qty) / 1000;
+                if(menu.dal) itemTotals.dal.qty += (p * pc.dal.qty) / 1000;
+                if(menu.soya) itemTotals.soya.qty += (p * pc.soya.qty) / 1000;
+                if(menu.oil) itemTotals.oil.qty += (p * pc.oil.qty) / 1000;
+                
+                if(menu.egg) {
+                    const dailyEggQty = p * pc.egg.qty;
+                    itemTotals.egg.qty += dailyEggQty;
+                    eggDailyData.push({
+                        date: r.date,
+                        day: dayName,
+                        qty: dailyEggQty,
+                        amt: dailyEggQty * pc.egg.price
+                    });
+                }
+                
+                if(menu.laddoo) itemTotals.laddoo.qty += (p * pc.laddoo.qty);
+                if(menu.fuelCost) itemTotals.fuel.qty += (p * pc.fuel.qty);
+                
+                if(menu.vegetable) {
+                    itemTotals.veg.qty += (p * pc.veg.qty) / 1000;
+                }
+                
+                itemTotals.salt.amount += p * pc.salt.price;
+            });
+
+            // Calculate Amounts
+            const dalAmount = itemTotals.dal.qty * itemTotals.dal.price;
+            const soyaAmount = itemTotals.soya.qty * itemTotals.soya.price;
+            const oilAmount = itemTotals.oil.qty * itemTotals.oil.price;
+            const eggAmount = itemTotals.egg.qty * itemTotals.egg.price;
+            const laddooAmount = itemTotals.laddoo.qty * itemTotals.laddoo.price;
+            const fuelAmount = itemTotals.fuel.qty * itemTotals.fuel.price;
+            const saltAmount = itemTotals.salt.amount;
+
+            // Veg Auto Adjust logic
+            const totalMonthlyBudget = totalMeals * parseFloat(appState.mealCost);
+            const sumOfOtherItems = dalAmount + soyaAmount + oilAmount + eggAmount + laddooAmount + fuelAmount + saltAmount;
+            
+            if (itemTotals.veg.qty > 0) {
+                itemTotals.veg.amount = Math.max(0, totalMonthlyBudget - sumOfOtherItems);
+            } else {
+                itemTotals.veg.amount = 0;
+            }
+
+            const grandTotalAmount = dalAmount + soyaAmount + oilAmount + itemTotals.veg.amount + eggAmount + laddooAmount + fuelAmount + saltAmount;
+
+            // --- Update Summary Cards ---
+            document.getElementById('abs-summary-meals').innerText = totalMeals;
+            document.getElementById('abs-summary-days').innerText = mealDays;
+            document.getElementById('abs-summary-rice').innerText = itemTotals.rice.qty.toFixed(3);
+            document.getElementById('abs-summary-amount').innerText = grandTotalAmount.toLocaleString('en-IN', {minimumFractionDigits:3, maximumFractionDigits:3});
+
+            // --- Update Table A ---
+            document.getElementById('t-meals-qty').innerText = totalMeals;
+            document.getElementById('t-rice-qty').innerText = itemTotals.rice.qty.toFixed(3);
+            
+            document.getElementById('t-dal-qty').innerText = itemTotals.dal.qty.toFixed(3);
+            document.getElementById('t-dal-amt').innerText = dalAmount.toFixed(3);
+            
+            document.getElementById('t-soya-qty').innerText = itemTotals.soya.qty.toFixed(3);
+            document.getElementById('t-soya-amt').innerText = soyaAmount.toFixed(3);
+            
+            document.getElementById('t-oil-qty').innerText = itemTotals.oil.qty.toFixed(3);
+            document.getElementById('t-oil-amt').innerText = oilAmount.toFixed(3);
+            
+            document.getElementById('t-veg-qty').innerText = itemTotals.veg.qty.toFixed(3);
+            document.getElementById('t-veg-amt').innerText = itemTotals.veg.amount.toFixed(3);
+            
+            document.getElementById('t-egg-qty').innerText = itemTotals.egg.qty;
+            document.getElementById('t-egg-amt').innerText = eggAmount.toFixed(3);
+            
+            document.getElementById('t-lad-qty').innerText = itemTotals.laddoo.qty;
+            document.getElementById('t-lad-amt').innerText = laddooAmount.toFixed(3);
+            
+            document.getElementById('t-fuel-amt').innerText = fuelAmount.toFixed(3);
+            document.getElementById('t-salt-amt').innerText = saltAmount.toFixed(3);
+            document.getElementById('t-total-amt').innerText = `₹${grandTotalAmount.toLocaleString('en-IN', {minimumFractionDigits:3, maximumFractionDigits:3})}`;
+
+            // --- Update Table B (Laddoo Breakdown) ---
+            const lQ = itemTotals.laddoo.qty;
+            // standard chart per laddoo: ragi 12g(₹150/kg), wheat 12g(₹41.67/kg), sesame 1g(₹140/kg), sugar 6g(₹45/kg), oil 2g(₹160/kg), groundnut 1g(₹150/kg), cardamom 0.04g(₹1500/kg), prep ₹0.26
+            const calcLaddooItem = (grams, priceKg) => {
+                const totalKg = (lQ * grams) / 1000;
+                return { qty: totalKg, amt: totalKg * priceKg };
+            }
+            
+            const ragi = calcLaddooItem(12, 150);
+            const wheat = calcLaddooItem(12, 41.666);
+            const sesame = calcLaddooItem(1, 140);
+            const sugar = calcLaddooItem(6, 45);
+            const oilL = calcLaddooItem(2, 160);
+            const groundnut = calcLaddooItem(1, 150);
+            const cardamom = calcLaddooItem(0.04, 1500);
+            const prepAmt = lQ * 0.26;
+            
+            document.getElementById('l-qty').innerText = lQ;
+            document.getElementById('l-amt').innerText = laddooAmount.toFixed(3);
+            
+            document.getElementById('l-ragi-qty').innerText = ragi.qty.toFixed(3);
+            document.getElementById('l-ragi-amt').innerText = ragi.amt.toFixed(3);
+            
+            document.getElementById('l-wheat-qty').innerText = wheat.qty.toFixed(3);
+            document.getElementById('l-wheat-amt').innerText = wheat.amt.toFixed(3);
+            
+            document.getElementById('l-sesame-qty').innerText = sesame.qty.toFixed(3);
+            document.getElementById('l-sesame-amt').innerText = sesame.amt.toFixed(3);
+            
+            document.getElementById('l-sugar-qty').innerText = sugar.qty.toFixed(3);
+            document.getElementById('l-sugar-amt').innerText = sugar.amt.toFixed(3);
+            
+            document.getElementById('l-oil-qty').innerText = oilL.qty.toFixed(3);
+            document.getElementById('l-oil-amt').innerText = oilL.amt.toFixed(3);
+            
+            document.getElementById('l-groundnut-qty').innerText = groundnut.qty.toFixed(3);
+            document.getElementById('l-groundnut-amt').innerText = groundnut.amt.toFixed(3);
+            
+            document.getElementById('l-cardamom-qty').innerText = cardamom.qty.toFixed(3);
+            document.getElementById('l-cardamom-amt').innerText = cardamom.amt.toFixed(3);
+            
+            document.getElementById('l-prep-amt').innerText = prepAmt.toFixed(3);
+            document.getElementById('l-total-amt').innerText = laddooAmount.toFixed(3);
+
+            // --- Update Table C (Rice Stock) ---
+            const riceOpening = parseFloat(appState.riceOpeningBalances[monthVal]) || 0;
+            const riceConsumed = itemTotals.rice.qty;
+            const riceClosing = riceOpening + riceReceivedTotal - riceConsumed;
+
+            document.getElementById('r-open').innerText = riceOpening.toFixed(3);
+            document.getElementById('r-received').innerText = riceReceivedTotal.toFixed(3);
+            document.getElementById('r-consumed').innerText = riceConsumed.toFixed(3);
+            document.getElementById('r-close').innerText = riceClosing.toFixed(3);
+
+            // --- Update Egg Statement ---
+            const eggTbody = document.getElementById('egg-statement-body');
+            let eggHtml = '';
+            
+            // Sort dates ascending
+            eggDailyData.sort((a,b) => new Date(a.date) - new Date(b.date));
+            
+            if(eggDailyData.length === 0) {
+                eggHtml = `<tr><td colspan="4" class="text-center text-gray-500 py-4">No egg days this month</td></tr>`;
+            } else {
+                eggDailyData.forEach(e => {
+                    eggHtml += `<tr>
+                        <td>${formatDateDDMMYYYY(e.date)}</td>
+                        <td>${e.day}</td>
+                        <td class="font-bold text-white">${e.qty}</td>
+                        <td class="text-right font-bold text-white">${e.amt.toFixed(3)}</td>
+                    </tr>`;
+                });
+            }
+            eggTbody.innerHTML = eggHtml;
+            document.getElementById('egg-total-qty').innerText = itemTotals.egg.qty;
+            document.getElementById('egg-total-amt').innerText = eggAmount.toFixed(3);
+        }
+
+        // ---------- Proper table-based PDF export (no screenshots) ----------
+        function pdfClean(s) {
+            return String(s == null ? '' : s)
+                .replace(/\u20B9/g, 'Rs.')
+                .replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"')
+                .replace(/[^\x20-\x7E\u00A0-\u00FF\u2013\u2014]/g, '')
+                .replace(/\s+/g, ' ').trim();
+        }
+        function pdfMonthLabel(id) {
+            const el = document.getElementById(id);
+            if (!el || !el.value) return '';
+            if (el.tagName === 'SELECT') return el.selectedOptions[0] ? el.selectedOptions[0].text : '';
+            const [y, m] = el.value.split('-');
+            const names = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+            return `${names[parseInt(m,10)-1]} ${y}`;
+        }
+        function pdfCellText(cell) {
+            const cb = cell.querySelector('input[type=checkbox]');
+            if (cb) {
+                const t = pdfClean(cell.textContent);
+                if (!cb.checked) return /holiday/i.test(t) ? 'Working' : '';
+                const hn = cell.querySelector('.holiday-name');
+                return hn && hn.value.trim() ? `Holiday (${pdfClean(hn.value)})` : t;
+            }
+            const clone = cell.cloneNode(true);
+            clone.querySelectorAll('br').forEach(b => b.replaceWith(' '));
+            const orig = cell.querySelectorAll('input,select,textarea');
+            const cl = clone.querySelectorAll('input,select,textarea');
+            orig.forEach((o, i) => {
+                const v = o.tagName === 'SELECT' ? (o.selectedOptions[0] ? o.selectedOptions[0].text : '') : o.value;
+                cl[i].replaceWith(document.createTextNode(' ' + v + ' '));
+            });
+            return pdfClean(clone.textContent);
+        }
+        function pdfExtractRows(rows, kind) {
+            const out = [];
+            Array.from(rows).forEach(tr => {
+                const trCls = tr.className || '';
+                const cells = Array.from(tr.cells);
+                const sectionRow = trCls.includes('bg-[#15201c]') || (cells.length === 1 && cells[0].colSpan > 1 && (cells[0].className || '').includes('bg-[#15201c]'));
+                const holiday = (trCls.includes('holiday-row') || trCls.includes('bg-[#1f2937]')) && kind === 'body';
+                out.push(cells.map(td => {
+                    let align = getComputedStyle(td).textAlign;
+                    align = align === 'right' ? 'right' : (align === 'center' ? 'center' : 'left');
+                    const cls = td.className || '';
+                    const st = { halign: align };
+                    if (kind === 'body') {
+                        if (sectionRow) { st.fontStyle = 'bold'; st.fillColor = [226, 240, 233]; }
+                        else if (cls.includes('bg-[#121415]')) { st.fillColor = [238, 238, 238]; }
+                        else if (holiday) { st.fillColor = [238, 238, 238]; st.textColor = [110, 110, 110]; }
+                        else if (/font-bold/.test(cls) && td.colSpan > 1) { st.fontStyle = 'bold'; }
+                    }
+                    return { content: pdfCellText(td), colSpan: td.colSpan || 1, rowSpan: td.rowSpan || 1, styles: st };
+                }));
+            });
+            return out;
+        }
+
+        function exportTablePDF(sectionId, filename, orientation, forPrint) {
+            if (!window.jspdf || !window.jspdf.jsPDF) throw new Error('jsPDF not loaded');
+            const school = (appState.schoolName || 'School').toUpperCase();
+            const cfg = {
+                'master-attendance': () => ({ title: 'Master Attendance Register', sub: pdfMonthLabel('att-month-select'), table: document.querySelector('#master-attendance table') }),
+                'mdm-register': () => ({ title: 'MDM All Item Register', sub: pdfMonthLabel('mdm-month-filter'), table: document.querySelector('#mdm-register table') }),
+                'rice-register': () => ({ title: 'Rice Stock Register', sub: pdfMonthLabel('rice-month-select') + ' | Opening balance: ' + (document.getElementById('rice-opening-balance').value || '0') + ' kg', table: document.querySelector('#rice-register table') }),
+                'abstract-format': () => ({ title: 'Abstract of Consumption', sub: document.getElementById('abs-subtitle').innerText, table: document.getElementById('main-abstract-table') }),
+                'egg-statement-table': () => ({ title: 'Egg Consumption Statement', sub: document.getElementById('egg-subtitle').innerText, table: document.querySelector('#egg-statement-table table') }),
+                'millet-laddoo': () => ({ title: 'Millet Laddoo Register', sub: pdfMonthLabel('laddoo-month-select'), table: document.querySelector('#millet-laddoo table') })
+            };
+            if (!cfg[sectionId]) { alert('Cannot find data to export.'); return; }
+            const c = cfg[sectionId]();
+            if (!c.table) { alert('No tabular data found to export.'); return; }
+
+            const head = c.table.tHead ? pdfExtractRows(c.table.tHead.rows, 'head') : [];
+            let body = [];
+            Array.from(c.table.tBodies).forEach(tb => { body = body.concat(pdfExtractRows(tb.rows, 'body')); });
+            const foot = c.table.tFoot ? pdfExtractRows(c.table.tFoot.rows, 'foot') : [];
+            if (!body.length) { alert('No data to export.'); return; }
+
+            const landscape = orientation === 'landscape';
+            const marginX = landscape ? 10 : 12;
+            const topY = 38, bottomReserve = 26;
+
+            function build(fs, pad) {
+                const doc = new window.jspdf.jsPDF({ orientation: landscape ? 'landscape' : 'portrait', unit: 'mm', format: 'a4', compress: true });
+                doc.autoTable({
+                    head, body, foot,
+                    startY: topY,
+                    margin: { top: topY, left: marginX, right: marginX, bottom: bottomReserve },
+                    theme: 'grid',
+                    styles: { font: 'helvetica', fontSize: fs, cellPadding: pad, lineColor: [110, 110, 110], lineWidth: 0.15, textColor: [20, 20, 20], valign: 'middle', overflow: 'linebreak' },
+                    headStyles: { fillColor: [6, 95, 70], textColor: 255, fontStyle: 'bold', lineColor: [6, 95, 70] },
+                    footStyles: { fillColor: [226, 240, 233], textColor: [20, 20, 20], fontStyle: 'bold' },
+                    bodyStyles: { fillColor: [255, 255, 255] },
+                    showFoot: 'lastPage',
+                    rowPageBreak: 'avoid'
+                });
+                return doc;
+            }
+
+            // Shrink font/padding step by step until the whole table fits on ONE page
+            let doc = null;
+            for (let fs = (landscape ? 9.5 : 10.5); fs >= 4.5; fs -= 0.5) {
+                const pad = Math.max(0.5, Math.min(2, fs * 0.2));
+                doc = build(fs, pad);
+                if (doc.getNumberOfPages() === 1) break;
+            }
+
+            // Header + footer on every page
+            const total = doc.getNumberOfPages();
+            const pw = doc.internal.pageSize.getWidth(), ph = doc.internal.pageSize.getHeight();
+            const now = new Date();
+            const pad2 = n => String(n).padStart(2, '0');
+            const stamp = `${pad2(now.getDate())}-${pad2(now.getMonth()+1)}-${now.getFullYear()} ${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
+            for (let p = 1; p <= total; p++) {
+                doc.setPage(p);
+                doc.setTextColor(20, 20, 20);
+                doc.setFont('helvetica', 'bold'); doc.setFontSize(14);
+                doc.text(pdfClean(school), pw / 2, 13, { align: 'center' });
+                doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(90, 90, 90);
+                doc.text('Mukhyamantri Posan Register', pw / 2, 18.5, { align: 'center' });
+                doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(6, 95, 70);
+                doc.text(pdfClean(c.title).toUpperCase(), pw / 2, 25.5, { align: 'center' });
+                doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(40, 40, 40);
+                doc.text(pdfClean(c.sub), pw / 2, 31, { align: 'center' });
+                doc.setDrawColor(6, 95, 70); doc.setLineWidth(0.5);
+                doc.line(marginX, 34, pw - marginX, 34);
+
+                // signature lines
+                doc.setDrawColor(60, 60, 60); doc.setLineWidth(0.25);
+                const sy = ph - 14;
+                doc.line(marginX, sy, marginX + 55, sy);
+                doc.line(pw - marginX - 55, sy, pw - marginX, sy);
+                doc.setFontSize(8.5); doc.setTextColor(40, 40, 40);
+                doc.text('Teacher-in-Charge (MDM)', marginX, sy + 4);
+                doc.text('Head Master', pw - marginX, sy + 4, { align: 'right' });
+                doc.setFontSize(7.5); doc.setTextColor(120, 120, 120);
+                doc.text('Generated: ' + stamp, pw / 2, ph - 6, { align: 'center' });
+                doc.text(`Page ${p} of ${total}`, pw - marginX, ph - 6, { align: 'right' });
+            }
+
+            const fname = `${filename}_${pad2(now.getDate())}-${pad2(now.getMonth()+1)}-${now.getFullYear()}.pdf`;
+            if (forPrint) {
+                doc.autoPrint();
+                const w = window.open(doc.output('bloburl'), '_blank');
+                if (!w) doc.save(fname);
+            } else {
+                doc.save(fname);
+            }
+        }
+
+
+        function exportData(type, sectionId, filename, orientation = 'portrait') {
+            const element = document.getElementById(sectionId);
+            if (!element) {
+                alert("Cannot find data to export.");
+                return;
+            }
+
+            if (type === 'pdf' || type === 'print') {
+                try { exportTablePDF(sectionId, filename, orientation, type === 'print'); }
+                catch (err) { console.error(err); alert('PDF could not be created. Please check your internet connection once so the PDF library can load, then try again.'); }
+                return;
+
+            } else if (type === 'excel') {
+                // Find all tables in the given section
+                const tables = element.querySelectorAll('table');
+                if(tables.length === 0) {
+                    alert("No tabular data found to export.");
+                    return;
+                }
+                
+                // Create a new Excel workbook
+                const wb = XLSX.utils.book_new();
+                
+                tables.forEach((table, index) => {
+                    const ws = XLSX.utils.table_to_sheet(table);
+                    const sheetName = tables.length === 1 ? 'Sheet1' : `Table_${index + 1}`;
+                    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+                });
+                
+                // Write the file
+                XLSX.writeFile(wb, `${filename}_${new Date().getTime()}.xlsx`);
+            }
+        }
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', () => {
+            if (appState.sidebarCollapsed) document.body.classList.add('sidebar-collapsed');
+            applyTheme();
+            // Load initial tab
+            switchTab('master-attendance');
+            
+            // --- PWA Setup (Single File Implementation) ---
+            setupPWA();
+        });
+
+        function setupPWA() {
+            const installBtn = document.getElementById('pwa-install-btn');
+            const installMobileBtn = document.getElementById('pwa-install-mobile-btn');
+            const installLabel = document.getElementById('pwa-install-label');
+            const installDot = document.getElementById('pwa-install-dot');
+            const netBadge = document.getElementById('net-status-badge');
+
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+            if (isStandalone) {
+                if (installLabel) installLabel.textContent = '✅ App Installed';
+                if (installDot) installDot.classList.remove('animate-pulse');
+                if (installMobileBtn) installMobileBtn.style.display = 'none';
+            } else if (window.deferredPWAPrompt) {
+                if (installLabel) installLabel.textContent = '📲 Install App (Ready)';
+                if (installDot) installDot.classList.add('animate-pulse');
+                if (installMobileBtn) installMobileBtn.style.display = '';
+            }
+
+            window.addEventListener('appinstalled', () => {
+                window.deferredPWAPrompt = null;
+                if (installLabel) installLabel.textContent = '✅ App Installed';
+                if (installDot) installDot.classList.remove('animate-pulse');
+                if (installMobileBtn) installMobileBtn.style.display = 'none';
+                closePWAGuideModal();
+            });
+
+            function updateNetStatus() {
+                if (!netBadge) return;
+                netBadge.textContent = navigator.onLine ? '🟢 Online & Offline Ready' : '🟡 Offline Mode (Saved Locally)';
+            }
+            window.addEventListener('online', updateNetStatus);
+            window.addEventListener('offline', updateNetStatus);
+            updateNetStatus();
+        }
+
+        async function triggerPWAInstall() {
+            if (window.deferredPWAPrompt) {
+                window.deferredPWAPrompt.prompt();
+                const choice = await window.deferredPWAPrompt.userChoice;
+                if (choice.outcome === 'accepted') {
+                    window.deferredPWAPrompt = null;
+                }
+                return;
+            }
+            const diag = document.getElementById('pwa-diag-box');
+            if (diag) {
+                const isHttps = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+                const hasSW = 'serviceWorker' in navigator && !!(await navigator.serviceWorker.getRegistration('./'));
+                if (!isHttps) {
+                    diag.innerHTML = '⚠️ <b>Not on HTTPS:</b> Android requires an <b>https://</b> URL (like Cloudflare Pages). Local <code>file://</code> links cannot install as a PWA.';
+                    diag.className = 'mb-4 p-3 rounded-lg bg-red-950/60 border border-red-500/40 text-xs text-red-200';
+                } else if (!hasSW) {
+                    diag.innerHTML = '⏳ <b>Service Worker loading:</b> Refresh the page once in <b>Google Chrome</b>, then tap <b>⋮ Menu → Install app</b>.';
+                    diag.className = 'mb-4 p-3 rounded-lg bg-amber-950/60 border border-amber-500/40 text-xs text-amber-200';
+                } else {
+                    diag.innerHTML = '✅ <b>PWA Ready on HTTPS:</b> In Android Chrome/Edge, tap <b>⋮ Menu → Install app</b> (or <b>Add to Home screen → Install</b>).';
+                    diag.className = 'mb-4 p-3 rounded-lg bg-emerald-950/60 border border-emerald-500/40 text-xs text-emerald-200';
+                }
+            }
+            const modal = document.getElementById('pwa-install-modal');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closePWAGuideModal() {
+            const modal = document.getElementById('pwa-install-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function exportBackupJSON() {
+            const now = new Date();
+            const pad2 = n => String(n).padStart(2, '0');
+            const stamp = `${now.getFullYear()}-${pad2(now.getMonth()+1)}-${pad2(now.getDate())}`;
+            const blob = new Blob([JSON.stringify(appState, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Posan_Register_Backup_${stamp}.json`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        }
+
+        function importBackupJSON(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (!parsed || typeof parsed !== 'object') throw new Error('Invalid JSON');
+                    appState = { ...DEFAULT_STATE, ...parsed };
+                    saveState();
+                    alert('Backup restored successfully! The app will now reload.');
+                    location.reload();
+                } catch (err) {
+                    alert('Could not restore backup: invalid JSON file.');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+    </script>
+
+    <!-- PWA Install Guide Modal -->
+    <div id="pwa-install-modal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onclick="if(event.target===this) closePWAGuideModal()">
+        <div class="bg-[#1a1c1e] border border-emerald-500/40 rounded-2xl max-w-md w-full p-6 shadow-2xl text-gray-200">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">📲 Install Mukhyamantri Posan Register</h3>
+                <button onclick="closePWAGuideModal()" class="text-gray-400 hover:text-white text-xl leading-none">&times;</button>
+            </div>
+            <p class="text-xs text-gray-400 mb-3">Install this app on your Android tablet, phone, or computer for full-screen offline access without needing internet.</p>
+            <div id="pwa-diag-box" class="mb-4 p-3 rounded-lg bg-black/30 border border-white/10 text-xs text-gray-300"></div>
+            <div class="space-y-3 text-sm">
+                <div class="p-3 rounded-lg bg-black/30 border border-white/10">
+                    <div class="font-bold text-emerald-400 mb-1">Android (Chrome / Edge)</div>
+                    <div class="text-xs text-gray-300">Tap the browser <b>⋮ Menu</b> → <b>Install app</b> or <b>Add to Home screen</b>.</div>
+                </div>
+                <div class="p-3 rounded-lg bg-black/30 border border-white/10">
+                    <div class="font-bold text-sky-400 mb-1">iPhone / iPad (Safari)</div>
+                    <div class="text-xs text-gray-300">Tap the <b>Share</b> button (<span class="font-mono">↑</span>) → scroll down and tap <b>Add to Home Screen</b>.</div>
+                </div>
+                <div class="p-3 rounded-lg bg-black/30 border border-white/10">
+                    <div class="font-bold text-amber-400 mb-1">Desktop (Chrome / Edge)</div>
+                    <div class="text-xs text-gray-300">Click the <b>Install icon</b> in the right side of the address bar, or open browser menu → <b>Save and Share → Install</b>.</div>
+                </div>
+            </div>
+            <button onclick="closePWAGuideModal()" class="mt-5 w-full bg-accent hover:bg-accentHover text-white font-semibold py-2.5 rounded-lg transition-colors">Got it</button>
+        </div>
+    </div>
+</body>
+</html>
